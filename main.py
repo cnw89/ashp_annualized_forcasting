@@ -3,12 +3,11 @@ import pandas as pd
 import numpy as np
 import altair as alt
 
-#TODO: set example usages properly
 FILENAME_HW = 'hw_usage_examples.csv'
-df_hw = pd.read_csv(FILENAME_HW)
+df_hw = pd.read_csv(FILENAME_HW, index_col=0)
 
 FILENAME_COOK = 'cook_usage_examples.csv'
-df_cook = pd.read_csv(FILENAME_COOK)
+df_cook = pd.read_csv(FILENAME_COOK, index_col=0)
 
 #TODO: advanced tab setting these
 BOILER_EFF = 0.88
@@ -20,16 +19,15 @@ GAS_kgCO2perkWh = 0.21
 ELEC_RENEW_kgCO2perkWh = 0
 ELEC_AVE_kgCO2perkWh = 0.136
 
-#TODO: some proper intro text here
-st.sidebar.header('Reference info...')
-st.sidebar.write('Some typical hot water volumes...')
+st.sidebar.header('Reference information')
+st.sidebar.write('**Some typical amounts of water for different uses.**')
 st.sidebar.table(df_hw)
-st.sidebar.write('Some typical cooking energy...')
+st.sidebar.write('**Some typical amounts of energy used for cooking with gas appliances.**')
 st.sidebar.table(df_cook)
 
 st.header('Annualized Cost and Emissions Estimator')
 #TODO: some proper intro text here
-st.write('Use this to compare how getting a heat pump could change your annual energy bills and CO2 emissions.')
+st.write('Use this tool to compare how a heat pump could change your annual energy bills and CO2 emissions.')
 
 with st.form('user_input'):
 
@@ -47,9 +45,9 @@ with st.form('user_input'):
         elec_bill = st.number_input('Monthly electricity bill (£)', min_value=0, max_value=1000, value=78, step=1)
 
     #TODO: do something with contract or take out
-    is_fixed_contract = st.checkbox('I have a fixed energy contract', value=True)
-    if is_fixed_contract:
-        fixed_until = st.date_input('Date contract is fixed until')
+    # is_fixed_contract = st.checkbox('I have a fixed energy contract', value=True)
+    # if is_fixed_contract:
+    #     fixed_until = st.date_input('Date contract is fixed until')
 
     c1, c2 = st.columns(2)
     with c1:
@@ -82,12 +80,12 @@ def generate_df(data_list, data_list_new, value_names):
     df1 = pd.DataFrame(data_list, columns=cols)
     df2 = pd.DataFrame(data_list_new, columns=cols)
     df = pd.concat([df1, df2])
+    df.round(0)
+    df[df == 0] = np.NaN
     
-    #TODO: set zeros to NaN
-    #TODO: round to correct sig fig
     return df
 
-def make_stacked_bar(source, value_name):
+def make_stacked_bar(source, value_name, titleStr):
     #TODO: change size of bar charts
     source = source.astype({value_name: 'float'})
 
@@ -95,38 +93,53 @@ def make_stacked_bar(source, value_name):
     x=alt.X('sum(' + value_name + '):Q', stack='zero'),
     y=alt.Y('Case:N'),
     color=alt.Color('Breakdown:N')
-    )
+    ).properties(title=titleStr, width='container', height=300
+    ).configure_axis(titleFontSize=16, labelFontSize=14
+    ).configure_title(fontSize=18
+    ).configure_legend(titleFontSize=16, labelFontSize=14)
 
-    text = alt.Chart(source).mark_text(dx=-15, dy=3, color='white').encode(
-        x=alt.X('sum(' + value_name + '):Q', stack='zero'),
-        y=alt.Y('Case:N'),
-        detail='Breakdown:N',
-        text=alt.Text('sum(' + value_name + '):Q', format='.1f')
-    )
-
-    st.altair_chart(bars + text, use_container_width=True)
+    # text = alt.Chart(source).mark_text(dx=-15, dy=3, color='white').encode(
+    #     x=alt.X('sum(' + value_name + '):Q', stack='zero'),
+    #     y=alt.Y('Case:N'),
+    #     detail='Breakdown:N',
+    #     text=alt.Text('sum(' + value_name + '):Q', format='d')
+    # )
+    # chart = bars + text
+    st.altair_chart(bars, use_container_width=True)
 
 def show_results():
 
     #TODO some introductory text
-    c1, c2 = st.columns(2)
+    st.header('Results')
+    st.write("Installing a heat pump is expected to reduce your household annual CO2 emissions by "
+            + f"**{(emissions_total-emissions_total_new)/1000:.2f} tonnes**, from "
+            + f"**{emissions_total/1000:.2f} tonnes** to **{emissions_total_new/1000:.2f} tonnes**.")
+    if costs_total_new < costs_total:
+        change_str = 'decrease'
+    else:
+        change_str = 'increase'
 
-    with c1:
-        st.subheader('Current System')
-        st.metric('Total Annual Cost', '£' + str(costs_total))
-        st.metric('Total Annual Emissions', str(emissions_total) + ' kgCO2e')
+    st.write(f"Your annual energy costs are expected to {change_str} by "
+            f"**£{abs(costs_total_new-costs_total):.0f}** from "
+            + f"**£{costs_total:.0f}** to **£{costs_total_new:.0f}**.")
+    # c1, c2 = st.columns(2)
 
-    with c2:
-        st.subheader('Heat Pump System')
-        st.metric('Total Annual Cost', '£' + str(costs_total_new))
-        st.metric('Total Annual Emissions', str(emissions_total_new) + ' kgCO2e')
+    # with c1:
+    #     st.subheader('Current System')
+    #     st.metric('Total Annual Cost', f"£ {costs_total:.0f}")
+    #     st.metric('Total Annual Emissions', f"{emissions_total:.0f} kgCO2e")
+
+    # with c2:
+    #     st.subheader('Heat Pump System')
+    #     st.metric('Total Annual Cost', f"£ {costs_total_new:.0f}")
+    #     st.metric('Total Annual Emissions', f"{emissions_total_new:.0f} kgCO2e")
     
     df_costs = generate_df(costs_by_type, costs_by_type_new, ['Costs (£)'])
     df_energy = generate_df(energy_usage, energy_usage_new, ['Energy (kWh)', 'Emissions (kgCO2e)'])
 
-    make_stacked_bar(df_costs, 'Costs (£)')
-    make_stacked_bar(df_energy, 'Energy (kWh)')
-    make_stacked_bar(df_energy, 'Emissions (kgCO2e)')
+    make_stacked_bar(df_costs, 'Costs (£)', 'Total Costs Comparison')
+    make_stacked_bar(df_energy, 'Energy (kWh)', 'Total Energy Consumption Comparison')
+    make_stacked_bar(df_energy, 'Emissions (kgCO2e)', 'Total CO2 Emissions Comparison')
 
 if is_submit:
 
@@ -165,8 +178,9 @@ if is_submit:
                 ['Current', 'Other Electricity', elec_total_kWh, elec_total_kWh*elec_kgCO2perkWh]]                
 
     emissions_total = sum([gas_heat_kWh*GAS_kgCO2perkWh, gas_hw_kWh*GAS_kgCO2perkWh, gas_cook_kWh*GAS_kgCO2perkWh, elec_total_kWh*elec_kgCO2perkWh])
+
     #now do the future/heat pump case
-    elec_heat_kWh = gas_heat_kWh * BOILER_EFF/HP_HEAT_SCOP
+    elec_heat_kWh = (1 - efficiency_boost/100) * gas_heat_kWh * BOILER_EFF/HP_HEAT_SCOP
     elec_hw_kWh = gas_hw_kWh * BOILER_EFF/HP_HW_COP
 
     elec_total_kWh_new = elec_total_kWh + elec_heat_kWh + elec_hw_kWh
