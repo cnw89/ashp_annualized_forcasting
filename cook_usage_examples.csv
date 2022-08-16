@@ -1,4 +1,4 @@
-﻿Use,Gas used (kWh)
-Small stove burner 20 mins,20
-Big stove burner 40 mins,50
-Gas oven 1 hour,150
+﻿Use,Gas consumption per use (kWh)
+Gas hob,0.8
+Gas grill,1
+Gas oven,1.5
