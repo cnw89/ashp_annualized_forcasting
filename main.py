@@ -37,7 +37,7 @@ with tab1:
     #TODO: some proper intro text here
     st.write('Use this tool to compare how a heat pump could change your annual energy bills and CO2 emissions.')
 
-    st.subheader('Forecast annual energy consumption')
+    st.subheader('1. Forecast annual energy consumption')
 
     st.write('Your projected annual energy consumption should be available on your energy bill.')
 
@@ -50,7 +50,7 @@ with tab1:
 
     is_elec_renewable = st.checkbox('Use only non-fossil fuel electricity', value=True, help='Otherwise the annual average CO2 emissions for UK mains electricity in 2021 is used.')    
 
-    st.subheader('Gas usage')
+    st.subheader('2. Gas usage')
     st.write('We need to understand a little a bit about how you use gas to estimate the heating requirements for your home.'
     + ' You can find some reference values in the sidebar to the left to help here.')
     c1, c2 = st.columns(2)
@@ -58,26 +58,40 @@ with tab1:
         is_hw_gas = st.checkbox('My hot water is heated with mains gas', value=False)
 
         if is_hw_gas:        
-            st.write('Typical hot water usage is between X and Y per person per day.')
-            gas_hw_lday = st.number_input('Hot water usage (litres per day)', min_value=0, max_value=1000, value=100, step=1)
+            st.write('How much hot water does your household use in a typical day?')
+            #+' Typical hot water usage is between X and Y per person per day.')
+            gas_hw_lday = st.number_input('Typical hot water usage is between X and Y litres per person per day. Enter the total litres/day here.', min_value=0, max_value=1000, value=100, step=1)
     with c2:
         
         is_cook_gas = st.checkbox('I cook with mains gas', value=False)
 
         if is_cook_gas:
-            st.write('A typical household uses between X and Y per week')
-            gas_cook_kWhweek = st.number_input('Cooking usage (kWh/week)', min_value=0, max_value=100, value=10, step=1)
-            is_convert_cook = st.checkbox('Convert any gas cooking to electricity in heat pump scenario', value=True)
+            st.write('How much energy do you use cooking each week with gas?')
+            gas_cook_kWhweek = st.number_input('A typical household uses between X and Y kWh per week. Enter total kWh/week here.', min_value=0, max_value=100, value=10, step=1)
 
-    st.subheader('Switching to a heat pump')
+    st.subheader('3. Tips for other set-ups')       
+    ex = st.expander('I have a gas fireplace')
+    with ex:
+        st.write('Comment')
+
+    ex = st.expander('I use solar thermal pannels to heat my hot water')
+    with ex:
+        st.write('Comment')
+
+    ex = st.expander('I generate some of my own electricity')
+    with ex:
+        st.write('Comment')
+
+    st.subheader('4. Switching to a heat pump')
     st.write('Some efficiency measures are often implemented prior to or as part of a heat pump installation, for example '
     + 'installing cavity wall insulation or larger radiators. If this is likely to be the case for you, you can add the net effect '
     + 'of them here. Typical measures reduce heating demand by 5-10%, minor measures 1-3%, major measures 10-30%.'
     + ' Some references values are also shown in the sidebar.')
     efficiency_boost = st.number_input('Percentage heating demand reduction for heat pump case', 
     min_value=0, max_value=99)
-    st.write('If you can disconnect from gas completely, you can save money by not paying the gas standing charge.')
-    is_disconnect_gas = st.checkbox('Disconnect from mains gas in heat pump scenario', value=True, help='Any cooking gas is then switched to electric.')
+    st.write('If you can disconnect from gas completely, you can save money by not paying the gas standing charge. Any gas fireplace, '
+    + 'gas hobs, or gas oven would need to be removed and replaced with electric appliances or simply disconnected.')
+    is_disconnect_gas = st.checkbox('Disconnect from mains gas in heat pump scenario', value=False)
     
     is_submit1 = st.button(label='Update', key='b1')
 
@@ -87,23 +101,27 @@ with tab2:
     st.header('Advanced Settings')
 
     st.subheader('Energy costs')
+    op1 = 'Use projected domestic energy price cap for the year October 2022 to September 2023'
+    op2 = 'Use the custom unit and standing charges below'
 
-    charge_option = st.radio('Energy charges',
-    ['Use projected domestic energy price cap for the year October 2022 to September 2023',
-    'Use the custom unit and standing charges below'])
+    charge_option = st.radio('Energy charges',[op1, op2])
+    if charge_option == op2:
+        c1, c2 = st.columns(2)
+        #TODO: different input of numbers here - monthly bill not broked down by gas/electricity?
+        with c1:
+    #            st.subheader('Gas')
+            gas_stand = st.number_input('Gas standing charge (p/day)', min_value=0.0, max_value=100.0, value=26.0, step=0.01)
+            gas_unit = st.number_input('Gas unit cost (p/kWh)', min_value=0.0, max_value=100.0, value=7.0, step=0.01)
 
-    c1, c2 = st.columns(2)
-    #TODO: different input of numbers here - monthly bill not broked down by gas/electricity?
-    with c1:
-#            st.subheader('Gas')
-        gas_stand = st.number_input('Gas standing charge (p/day)', min_value=0.0, max_value=100.0, value=26.0, step=0.01)
-        gas_unit = st.number_input('Gas unit cost (p/kWh)', min_value=0.0, max_value=100.0, value=7.0, step=0.01)
-
-    with c2:
-#           st.subheader('Electricity')
-        elec_stand = st.number_input('Electricity standing charge (p/day)', min_value=0.0, max_value=100.0, value=36.0, step=0.01)        
-        elec_unit = st.number_input('Electricity unit cost (p/kWh)', min_value=0.0, max_value=100.0, value=28.0, step=0.01)  
-
+        with c2:
+    #           st.subheader('Electricity')
+            elec_stand = st.number_input('Electricity standing charge (p/day)', min_value=0.0, max_value=100.0, value=36.0, step=0.01)        
+            elec_unit = st.number_input('Electricity unit cost (p/kWh)', min_value=0.0, max_value=100.0, value=28.0, step=0.01)  
+    else:
+        gas_stand = 26.0
+        gas_unit = 7.0
+        elec_stand = 36.0
+        elec_unit = 28.0
 
     st.subheader('Device performance')
     c1, c2 = st.columns(2)
@@ -244,11 +262,8 @@ elec_hw_kWh = gas_hw_kWh * boiler_heat_eff/hp_hw_cop
 
 elec_total_kWh_new = elec_total_kWh + elec_heat_kWh + elec_hw_kWh
 
-if is_disconnect_gas:
-    is_convert_cook = True
-
 if is_cook_gas:
-    if is_convert_cook:
+    if is_disconnect_gas:
         emissions_cook = gas_cook_kWh * elec_kgCO2perkWh
         elec_total_kWh_new += gas_cook_kWh
         gas_total_kWh_new = 0
