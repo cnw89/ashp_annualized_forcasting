@@ -37,75 +37,96 @@ with tab1:
     #TODO: some proper intro text here
     st.write('Use this tool to compare how a heat pump could change your annual energy bills and CO2 emissions.')
 
-    with st.form('user_input'):
+    st.subheader('Forecast annual energy consumption')
 
-        c1, c2 = st.columns(2)
-        #TODO: different input of numbers here - monthly bill not broked down by gas/electricity?
-        with c1:
-            st.subheader('Gas')
-            gas_stand = st.number_input('Gas standing charge (p/day)', min_value=0.0, max_value=100.0, value=26.0, step=0.01)
-            gas_unit = st.number_input('Gas unit cost (p/kWh)', min_value=0.0, max_value=100.0, value=7.0, step=0.01)
-            gas_bill = st.number_input('Monthly gas bill (£)', min_value=0, max_value=1000, value=65, step=1)
-        with c2:
-            st.subheader('Electricity')
-            elec_stand = st.number_input('Electricity standing charge (p/day)', min_value=0.0, max_value=100.0, value=36.0, step=0.01)        
-            elec_unit = st.number_input('Electricity unit cost (p/kWh)', min_value=0.0, max_value=100.0, value=28.0, step=0.01)
-            elec_bill = st.number_input('Monthly electricity bill (£)', min_value=0, max_value=1000, value=78, step=1)
+    st.write('Your projected annual energy consumption should be available on your energy bill.')
 
-        #TODO: do something with contract or take out
-        # is_fixed_contract = st.checkbox('I have a fixed energy contract', value=True)
-        # if is_fixed_contract:
-        #     fixed_until = st.date_input('Date contract is fixed until')
+    c1, c2 = st.columns(2)        
+    with c1:
 
-        c1, c2 = st.columns(2)
-        with c1:
-            st.subheader('Hot water')
-            is_hw_gas = st.checkbox('My hot water is heated with mains gas', value=True)
+        elec_total_kWh = st.number_input('Annual projected electricity consumption (kWh)', min_value=0, max_value=100000, value=12000, step=100)
+    with c2:
+        gas_total_kWh = st.number_input('Annual projected gas consumption (kWh)', min_value=0, max_value=100000, value=12000, step=100)        
 
-            if is_hw_gas:        
-                gas_hw_lday = st.number_input('Hot water usage (litres per day)', min_value=0, max_value=1000, value=100, step=1)
-        with c2:
-            st.subheader('Cooking')
+    is_elec_renewable = st.checkbox('Use only non-fossil fuel electricity', value=True, help='Otherwise the annual average CO2 emissions for UK mains electricity in 2021 is used.')    
 
-            is_cook_gas = st.checkbox('I cook with mains gas', value=True)
+    st.subheader('Gas usage')
+    st.write('We need to understand a little a bit about how you use gas to estimate the heating requirements for your home.'
+    + ' You can find some reference values in the sidebar to the left to help here.')
+    c1, c2 = st.columns(2)
+    with c1:
+        is_hw_gas = st.checkbox('My hot water is heated with mains gas', value=False)
 
-            if is_cook_gas:
-                gas_cook_kWhweek = st.number_input('Cooking usage (kWh/week)', min_value=0, max_value=100, value=10, step=1)
-                is_convert_cook = st.checkbox('Convert any gas cooking to electricity in heat pump scenario', value=True)
+        if is_hw_gas:        
+            st.write('Typical hot water usage is between X and Y per person per day.')
+            gas_hw_lday = st.number_input('Hot water usage (litres per day)', min_value=0, max_value=1000, value=100, step=1)
+    with c2:
+        
+        is_cook_gas = st.checkbox('I cook with mains gas', value=False)
 
-        efficiency_boost = st.number_input('Heating demand reduction as a result of energy efficiency measures implemented Heat Pump installation', 
-        min_value=0, max_value=99, help='For example as a result of any change in your radiators or insulation.')
-        is_disconnect_gas = st.checkbox('Disconnect from mains gas in heat pump scenario', value=True, help='Any cooking gas is then switched to electric.')
-        is_elec_renewable = st.checkbox('Use only non-fossil fuel electricity', value=True, help='Otherwise the annual average CO2 emissions for UK mains electricity in 2021 is used.')    
+        if is_cook_gas:
+            st.write('A typical household uses between X and Y per week')
+            gas_cook_kWhweek = st.number_input('Cooking usage (kWh/week)', min_value=0, max_value=100, value=10, step=1)
+            is_convert_cook = st.checkbox('Convert any gas cooking to electricity in heat pump scenario', value=True)
 
-        is_submit1 = st.form_submit_button(label='Update')
+    st.subheader('Switching to a heat pump')
+    st.write('Some efficiency measures are often implemented prior to or as part of a heat pump installation, for example '
+    + 'installing cavity wall insulation or larger radiators. If this is likely to be the case for you, you can add the net effect '
+    + 'of them here. Typical measures reduce heating demand by 5-10%, minor measures 1-3%, major measures 10-30%.'
+    + ' Some references values are also shown in the sidebar.')
+    efficiency_boost = st.number_input('Percentage heating demand reduction for heat pump case', 
+    min_value=0, max_value=99)
+    st.write('If you can disconnect from gas completely, you can save money by not paying the gas standing charge.')
+    is_disconnect_gas = st.checkbox('Disconnect from mains gas in heat pump scenario', value=True, help='Any cooking gas is then switched to electric.')
+    
+    is_submit1 = st.button(label='Update', key='b1')
 
 with tab2:
 
-    with st.form('advanced'):
-        st.header('Advanced Settings')
-        st.subheader('Device performance')
-        c1, c2 = st.columns(2)
-        
-        with c1:
-            st.write('Average boiler efficiency')
-            boiler_heat_eff = st.number_input('When space heating', min_value=0.0, max_value=1.00, value=0.88, step=0.01)
-            boiler_hw_eff = st.number_input('When hot water heating', min_value=0.0, max_value=1.00, value=0.88, step=0.01)
-        with c2:
-            st.write('Heat pump seasonal coefficient of performance')
-            hp_heat_scop = st.number_input('When space heating', min_value=0.1, max_value=10.0, value=3.2, step=0.1)
-            hp_hw_cop = st.number_input('When hot water heating', min_value=0.1, max_value=10.0, value=2.7, step=0.1)
 
-        hw_temp_raise = st.number_input('Cold and hot water temperature difference (degC)', min_value=1, max_value=100, step=1, 
-        help='The typical difference in temperature between mains water and hot water as used.', value=35)
+    st.header('Advanced Settings')
 
-        st.subheader('Carbon intensity')
-        st.write("some text explaining")
+    st.subheader('Energy costs')
 
-        st.subheader('Other assumptions')
-        st.write("some text explaining")
+    charge_option = st.radio('Energy charges',
+    ['Use projected domestic energy price cap for the year October 2022 to September 2023',
+    'Use the custom unit and standing charges below'])
 
-        is_submit2 = st.form_submit_button(label='Update')
+    c1, c2 = st.columns(2)
+    #TODO: different input of numbers here - monthly bill not broked down by gas/electricity?
+    with c1:
+#            st.subheader('Gas')
+        gas_stand = st.number_input('Gas standing charge (p/day)', min_value=0.0, max_value=100.0, value=26.0, step=0.01)
+        gas_unit = st.number_input('Gas unit cost (p/kWh)', min_value=0.0, max_value=100.0, value=7.0, step=0.01)
+
+    with c2:
+#           st.subheader('Electricity')
+        elec_stand = st.number_input('Electricity standing charge (p/day)', min_value=0.0, max_value=100.0, value=36.0, step=0.01)        
+        elec_unit = st.number_input('Electricity unit cost (p/kWh)', min_value=0.0, max_value=100.0, value=28.0, step=0.01)  
+
+
+    st.subheader('Device performance')
+    c1, c2 = st.columns(2)
+    
+    with c1:
+        st.write('Average boiler efficiency')
+        boiler_heat_eff = st.number_input('When space heating', min_value=0.0, max_value=1.00, value=0.88, step=0.01)
+        boiler_hw_eff = st.number_input('When hot water heating', min_value=0.0, max_value=1.00, value=0.88, step=0.01)
+    with c2:
+        st.write('Heat pump seasonal coefficient of performance')
+        hp_heat_scop = st.number_input('When space heating', min_value=0.1, max_value=10.0, value=3.2, step=0.1)
+        hp_hw_cop = st.number_input('When hot water heating', min_value=0.1, max_value=10.0, value=2.7, step=0.1)
+
+    hw_temp_raise = st.number_input('Cold and hot water temperature difference (degC)', min_value=1, max_value=100, step=1, 
+    help='The typical difference in temperature between mains water and hot water as used.', value=35)
+
+    st.subheader('Carbon intensity')
+    st.write("some text explaining")
+
+    st.subheader('Other assumptions')
+    st.write("some text explaining")
+
+    is_submit2 = st.button(label='Update', key='b2')
 
 def generate_df(data_list, data_list_new, value_names):
 
@@ -144,7 +165,7 @@ def make_stacked_bar(source, value_name, titleStr):
     st.altair_chart(bars, use_container_width=True)
 
 def show_results():
-
+    
     st.header('Results')
     st.write("Installing a heat pump is expected to reduce your household annual CO2 emissions by "
             + f"**{(emissions_total-emissions_total_new)/1000:.2f} tonnes**, from "
@@ -170,89 +191,91 @@ def show_results():
     #     st.metric('Total Annual Emissions', f"{emissions_total_new:.0f} kgCO2e")
     
     df_costs = generate_df(costs_by_type, costs_by_type_new, ['Costs (£)'])
+    print(df_costs.head())
     df_energy = generate_df(energy_usage, energy_usage_new, ['Energy (kWh)', 'Emissions (kgCO2e)'])
 
     make_stacked_bar(df_costs, 'Costs (£)', 'Total Costs Comparison')
     make_stacked_bar(df_energy, 'Energy (kWh)', 'Total Energy Consumption Comparison')
     make_stacked_bar(df_energy, 'Emissions (kgCO2e)', 'Total CO2 Emissions Comparison')
 
-if is_submit1 or is_submit2:
+if not (is_submit1 or is_submit2):
+    st.stop()
 
-    GAS_HW_kWhperL = 4200 * hw_temp_raise/(3600 * 1000 * boiler_hw_eff)
-        #first do the current case
-    #don't worry about fixed/non-fixed contract for now, or future energy costs
-    costs_by_type = [['Current', 'Gas standing charge', gas_stand*3.65],
-                    ['Current', 'Gas unit costs',  gas_bill*12 - gas_stand*3.65],
-                    ['Current', 'Electricity standing charge', elec_stand*3.65],
-                    ['Current', 'Electricity unit costs', elec_bill*12 - elec_stand*3.65]] 
-                    
-    costs_total = (gas_bill + elec_bill) * 12
+GAS_HW_kWhperL = 4200 * hw_temp_raise/(3600 * 1000 * boiler_hw_eff)
+    #first do the current case
+#don't worry about fixed/non-fixed contract for now, or future energy costs
+costs_by_type = [['Current', 'Gas standing charge', gas_stand*3.65],
+                ['Current', 'Gas unit costs',  gas_total_kWh * gas_unit/100],
+                ['Current', 'Electricity standing charge', elec_stand*3.65],
+                ['Current', 'Electricity unit costs', elec_total_kWh * elec_unit/100]] 
+            
+costs_total = (gas_stand + elec_stand)*3.65 + gas_total_kWh * gas_unit/100 + elec_total_kWh * elec_unit/100
 
-    gas_total_kWh = (gas_bill*12 - gas_stand*3.65)/(gas_unit/100)
-    elec_total_kWh = (elec_bill*12 - elec_stand*3.65)/(elec_unit/100)
+#gas_total_kWh = (gas_bill*12 - gas_stand*3.65)/(gas_unit/100)
+#elec_total_kWh = (elec_bill*12 - elec_stand*3.65)/(elec_unit/100)
 
-    if is_hw_gas:
-        gas_hw_kWh = gas_hw_lday * 365 * GAS_HW_kWhperL
-    else:
-        gas_hw_kWh = 0
+if is_hw_gas:
+    gas_hw_kWh = gas_hw_lday * 365 * GAS_HW_kWhperL
+else:
+    gas_hw_kWh = 0
 
-    if is_cook_gas:
-        gas_cook_kWh = gas_cook_kWhweek * 52
-    else:
-        gas_cook_kWh = 0
+if is_cook_gas:
+    gas_cook_kWh = gas_cook_kWhweek * 52
+else:
+    gas_cook_kWh = 0
 
-    gas_heat_kWh = gas_total_kWh - gas_hw_kWh - gas_cook_kWh
+gas_heat_kWh = gas_total_kWh - gas_hw_kWh - gas_cook_kWh
 
-    if is_elec_renewable:
-        elec_kgCO2perkWh = ELEC_RENEW_kgCO2perkWh
-    else:
-        elec_kgCO2perkWh = ELEC_AVE_kgCO2perkWh
+if is_elec_renewable:
+    elec_kgCO2perkWh = ELEC_RENEW_kgCO2perkWh
+else:
+    elec_kgCO2perkWh = ELEC_AVE_kgCO2perkWh
 
-    energy_usage = [['Current', 'Heating', gas_heat_kWh, gas_heat_kWh*GAS_kgCO2perkWh],
-                ['Current', 'Hot water', gas_hw_kWh, gas_hw_kWh*GAS_kgCO2perkWh],
-                ['Current', 'Cooking', gas_cook_kWh, gas_cook_kWh*GAS_kgCO2perkWh],
-                ['Current', 'Other Electricity', elec_total_kWh, elec_total_kWh*elec_kgCO2perkWh]]                
+energy_usage = [['Current', 'Heating', gas_heat_kWh, gas_heat_kWh*GAS_kgCO2perkWh],
+            ['Current', 'Hot water', gas_hw_kWh, gas_hw_kWh*GAS_kgCO2perkWh],
+            ['Current', 'Cooking', gas_cook_kWh, gas_cook_kWh*GAS_kgCO2perkWh],
+            ['Current', 'Other Electricity', elec_total_kWh, elec_total_kWh*elec_kgCO2perkWh]]                
 
-    emissions_total = sum([gas_heat_kWh*GAS_kgCO2perkWh, gas_hw_kWh*GAS_kgCO2perkWh, gas_cook_kWh*GAS_kgCO2perkWh, elec_total_kWh*elec_kgCO2perkWh])
+emissions_total = sum([gas_heat_kWh*GAS_kgCO2perkWh, gas_hw_kWh*GAS_kgCO2perkWh, gas_cook_kWh*GAS_kgCO2perkWh, elec_total_kWh*elec_kgCO2perkWh])
 
-    #now do the future/heat pump case
-    elec_heat_kWh = (1 - efficiency_boost/100) * gas_heat_kWh * boiler_heat_eff/hp_heat_scop
-    elec_hw_kWh = gas_hw_kWh * boiler_heat_eff/hp_hw_cop
+#now do the future/heat pump case
+elec_heat_kWh = (1 - efficiency_boost/100) * gas_heat_kWh * boiler_heat_eff/hp_heat_scop
+elec_hw_kWh = gas_hw_kWh * boiler_heat_eff/hp_hw_cop
 
-    elec_total_kWh_new = elec_total_kWh + elec_heat_kWh + elec_hw_kWh
+elec_total_kWh_new = elec_total_kWh + elec_heat_kWh + elec_hw_kWh
 
-    if is_disconnect_gas:
-        is_convert_cook = True
+if is_disconnect_gas:
+    is_convert_cook = True
 
-    if is_cook_gas:
-        if is_convert_cook:
-            emissions_cook = gas_cook_kWh * elec_kgCO2perkWh
-            elec_total_kWh_new += gas_cook_kWh
-            gas_total_kWh_new = 0
-        else:
-            emissions_cook = gas_cook_kWh * GAS_kgCO2perkWh
-            gas_total_kWh_new = gas_cook_kWh
-    else:
-        emissions_cook = 0
+if is_cook_gas:
+    if is_convert_cook:
+        emissions_cook = gas_cook_kWh * elec_kgCO2perkWh
+        elec_total_kWh_new += gas_cook_kWh
         gas_total_kWh_new = 0
-
-    energy_usage_new = [['Heat Pump', 'Heating', elec_heat_kWh, elec_heat_kWh*elec_kgCO2perkWh],
-                ['Heat Pump', 'Hot water', elec_hw_kWh, elec_hw_kWh*elec_kgCO2perkWh],
-                ['Heat Pump', 'Cooking', gas_cook_kWh, emissions_cook],
-                ['Heat Pump', 'Other Electricity', elec_total_kWh, elec_total_kWh*elec_kgCO2perkWh]]   
-
-    emissions_total_new = sum([elec_heat_kWh*elec_kgCO2perkWh, elec_hw_kWh*elec_kgCO2perkWh, emissions_cook, elec_total_kWh*elec_kgCO2perkWh])
-
-    if is_disconnect_gas:
-        gas_stand_total_new = 0
     else:
-        gas_stand_total_new = gas_stand*3.65
+        emissions_cook = gas_cook_kWh * GAS_kgCO2perkWh
+        gas_total_kWh_new = gas_cook_kWh
+else:
+    emissions_cook = 0
+    gas_total_kWh_new = 0
 
-    costs_by_type_new = [['Heat Pump', 'Gas standing charge', gas_stand_total_new],
-                    ['Heat Pump', 'Gas unit costs',  gas_total_kWh_new*gas_unit/100],
-                    ['Heat Pump', 'Electricity standing charge', elec_stand*3.65],
-                    ['Heat Pump', 'Electricity unit costs', elec_total_kWh_new*elec_unit/100]] 
+energy_usage_new = [['Heat Pump', 'Heating', elec_heat_kWh, elec_heat_kWh*elec_kgCO2perkWh],
+            ['Heat Pump', 'Hot water', elec_hw_kWh, elec_hw_kWh*elec_kgCO2perkWh],
+            ['Heat Pump', 'Cooking', gas_cook_kWh, emissions_cook],
+            ['Heat Pump', 'Other Electricity', elec_total_kWh, elec_total_kWh*elec_kgCO2perkWh]]   
 
-    costs_total_new = sum([gas_stand_total_new, gas_total_kWh_new*gas_unit/100, elec_stand*3.65, elec_total_kWh_new*elec_unit/100])
+emissions_total_new = sum([elec_heat_kWh*elec_kgCO2perkWh, elec_hw_kWh*elec_kgCO2perkWh, emissions_cook, elec_total_kWh*elec_kgCO2perkWh])
 
-    show_results()
+if is_disconnect_gas:
+    gas_stand_total_new = 0
+else:
+    gas_stand_total_new = gas_stand*3.65
+
+costs_by_type_new = [['Heat Pump', 'Gas standing charge', gas_stand_total_new],
+                ['Heat Pump', 'Gas unit costs',  gas_total_kWh_new*gas_unit/100],
+                ['Heat Pump', 'Electricity standing charge', elec_stand*3.65],
+                ['Heat Pump', 'Electricity unit costs', elec_total_kWh_new*elec_unit/100]] 
+
+costs_total_new = sum([gas_stand_total_new, gas_total_kWh_new*gas_unit/100, elec_stand*3.65, elec_total_kWh_new*elec_unit/100])
+
+show_results()
