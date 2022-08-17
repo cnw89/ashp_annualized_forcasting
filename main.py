@@ -1,19 +1,16 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import altair as alt
+from helper import generate_df, make_stacked_bar, make_stacked_bar_narrow
 
+about_markdown = 'This app has been developed by Chris Warwick, August 2022.'
+st.set_page_config(layout="centered", menu_items={'Get Help': None, 'Report a Bug': None, 'About': about_markdown})
+
+#COMMENTS on:
 #TODO: inductive hob cooking more efficient than gas hob cooking 
 #also for gas/electric oven
 #TODO: hot water tank efficiency
 
-FILENAME_HW = 'hw_usage_examples.csv'
-df_hw = pd.read_csv(FILENAME_HW, index_col=0)
-
-FILENAME_COOK = 'cook_usage_examples.csv'
-df_cook = pd.read_csv(FILENAME_COOK, index_col=0)
-
-#default values
+#set default values
 boiler_heat_eff = 0.88
 boiler_hw_eff = 0.88
 hw_temp_raise = 35
@@ -24,31 +21,38 @@ GAS_kgCO2perkWh = 0.21
 ELEC_RENEW_kgCO2perkWh = 0
 ELEC_AVE_kgCO2perkWh = 0.136
 
+#write some reference infor to the sidebar
+FILENAME_HW = 'hw_usage_examples.csv'
+df_hw = pd.read_csv(FILENAME_HW, index_col=0)
+
+FILENAME_COOK = 'cook_usage_examples.csv'
+df_cook = pd.read_csv(FILENAME_COOK, index_col=0)
+
 st.sidebar.header('Reference information')
 st.sidebar.write('**Some typical amounts of water for different uses.**')
 st.sidebar.table(df_hw)
 st.sidebar.write('**Some typical amounts of energy used for cooking with gas appliances.**')
 st.sidebar.table(df_cook)
 
+#Now go to main tabs
 tab1, tab2 = st.tabs(["Basic Settings", "Advanced Settings"])
 
+#basic settings
 with tab1:
-    st.header('Annualized Cost and Emissions Estimator')
-    #TODO: some proper intro text here
+    st.header('Annualized Cost and Emissions Estimator')    
     st.write('Use this tool to compare how a heat pump could change your annual energy bills and CO2 emissions.')
 
     st.subheader('1. Forecast annual energy consumption')
-
     st.write('Your projected annual energy consumption should be available on your energy bill.')
 
     c1, c2 = st.columns(2)        
     with c1:
-
         elec_total_kWh = st.number_input('Annual projected electricity consumption (kWh)', min_value=0, max_value=100000, value=12000, step=100)
     with c2:
         gas_total_kWh = st.number_input('Annual projected gas consumption (kWh)', min_value=0, max_value=100000, value=12000, step=100)        
 
-    is_elec_renewable = st.checkbox('Use only non-fossil fuel electricity', value=True, help='Otherwise the annual average CO2 emissions for UK mains electricity in 2021 is used.')    
+    is_elec_renewable = st.checkbox('Use only non-fossil fuel electricity', value=True, 
+    help='Otherwise the annual average CO2 emissions for UK mains electricity in 2021 is used.')    
 
     st.subheader('2. Gas usage')
     st.write('We need to understand a little a bit about how you use gas to estimate the heating requirements for your home.'
@@ -60,14 +64,16 @@ with tab1:
         if is_hw_gas:        
             st.write('How much hot water does your household use in a typical day?')
             #+' Typical hot water usage is between X and Y per person per day.')
-            gas_hw_lday = st.number_input('Typical hot water usage is between X and Y litres per person per day. Enter the total litres/day here.', min_value=0, max_value=1000, value=100, step=1)
+            gas_hw_lday = st.number_input('Typical hot water usage is between X and Y litres per person per day. Enter the total litres/day here.', 
+            min_value=0, max_value=1000, value=100, step=1)
     with c2:
         
         is_cook_gas = st.checkbox('I cook with mains gas', value=False)
 
         if is_cook_gas:
             st.write('How much energy do you use cooking each week with gas?')
-            gas_cook_kWhweek = st.number_input('A typical household uses between X and Y kWh per week. Enter total kWh/week here.', min_value=0, max_value=100, value=10, step=1)
+            gas_cook_kWhweek = st.number_input('A typical household uses between X and Y kWh per week. Enter total kWh/week here.', 
+            min_value=0, max_value=100, value=10, step=1)
 
     st.subheader('3. Tips for other set-ups')       
     ex = st.expander('I have a gas fireplace')
@@ -95,26 +101,24 @@ with tab1:
     
     is_submit1 = st.button(label='Update', key='b1')
 
+#advanced settings
 with tab2:
-
 
     st.header('Advanced Settings')
 
-    st.subheader('Energy costs')
+    st.subheader('Energy prices')
     op1 = 'Use projected domestic energy price cap for the year October 2022 to September 2023'
     op2 = 'Use the custom unit and standing charges below'
 
-    charge_option = st.radio('Energy charges',[op1, op2])
+    charge_option = st.radio('Prices to use',[op1, op2])
     if charge_option == op2:
         c1, c2 = st.columns(2)
-        #TODO: different input of numbers here - monthly bill not broked down by gas/electricity?
-        with c1:
-    #            st.subheader('Gas')
+        
+        with c1:    
             gas_stand = st.number_input('Gas standing charge (p/day)', min_value=0.0, max_value=100.0, value=26.0, step=0.01)
             gas_unit = st.number_input('Gas unit cost (p/kWh)', min_value=0.0, max_value=100.0, value=7.0, step=0.01)
 
-        with c2:
-    #           st.subheader('Electricity')
+        with c2:    
             elec_stand = st.number_input('Electricity standing charge (p/day)', min_value=0.0, max_value=100.0, value=36.0, step=0.01)        
             elec_unit = st.number_input('Electricity unit cost (p/kWh)', min_value=0.0, max_value=100.0, value=28.0, step=0.01)  
     else:
@@ -146,86 +150,16 @@ with tab2:
 
     is_submit2 = st.button(label='Update', key='b2')
 
-def generate_df(data_list, data_list_new, value_names):
-
-    cols = ["Case", "Breakdown"]
-    cols.extend(value_names)
-    
-    df1 = pd.DataFrame(data_list, columns=cols)
-    df2 = pd.DataFrame(data_list_new, columns=cols)
-    df = pd.concat([df1, df2])
-    df.round(0)
-    df[df == 0] = np.NaN
-    
-    return df
-
-def make_stacked_bar(source, value_name, titleStr):
-    #TODO: change size of bar charts
-    source = source.astype({value_name: 'float'})
-
-    x_str = 'Total Annual ' + value_name
-    bars = alt.Chart(source).mark_bar().encode(
-    x=alt.X('sum(' + value_name + '):Q', stack='zero', title=x_str),
-    y=alt.Y('Case:N'),
-    color=alt.Color('Breakdown:N')
-    ).properties(title=titleStr, width='container', height=300
-    ).configure_axis(titleFontSize=16, labelFontSize=14
-    ).configure_title(fontSize=18
-    ).configure_legend(titleFontSize=16, labelFontSize=14)
-
-    # text = alt.Chart(source).mark_text(dx=-15, dy=3, color='white').encode(
-    #     x=alt.X('sum(' + value_name + '):Q', stack='zero'),
-    #     y=alt.Y('Case:N'),
-    #     detail='Breakdown:N',
-    #     text=alt.Text('sum(' + value_name + '):Q', format='d')
-    # )
-    # chart = bars + text
-    st.altair_chart(bars, use_container_width=True)
-
-def show_results():
-    
-    st.header('Results')
-    st.write("Installing a heat pump is expected to reduce your household annual CO2 emissions by "
-            + f"**{(emissions_total-emissions_total_new)/1000:.2f} tonnes**, from "
-            + f"**{emissions_total/1000:.2f} tonnes** to **{emissions_total_new/1000:.2f} tonnes**.")
-    if costs_total_new < costs_total:
-        change_str = 'decrease'
-    else:
-        change_str = 'increase'
-
-    st.write(f"Your annual energy costs are expected to {change_str} by "
-            f"**£{abs(costs_total_new-costs_total):.0f}** from "
-            + f"**£{costs_total:.0f}** to **£{costs_total_new:.0f}**.")
-    # c1, c2 = st.columns(2)
-
-    # with c1:
-    #     st.subheader('Current System')
-    #     st.metric('Total Annual Cost', f"£ {costs_total:.0f}")
-    #     st.metric('Total Annual Emissions', f"{emissions_total:.0f} kgCO2e")
-
-    # with c2:
-    #     st.subheader('Heat Pump System')
-    #     st.metric('Total Annual Cost', f"£ {costs_total_new:.0f}")
-    #     st.metric('Total Annual Emissions', f"{emissions_total_new:.0f} kgCO2e")
-    
-    df_costs = generate_df(costs_by_type, costs_by_type_new, ['Costs (£)'])
-    print(df_costs.head())
-    df_energy = generate_df(energy_usage, energy_usage_new, ['Energy (kWh)', 'Emissions (kgCO2e)'])
-
-    make_stacked_bar(df_costs, 'Costs (£)', 'Total Costs Comparison')
-    make_stacked_bar(df_energy, 'Energy (kWh)', 'Total Energy Consumption Comparison')
-    make_stacked_bar(df_energy, 'Emissions (kgCO2e)', 'Total CO2 Emissions Comparison')
-
 if not (is_submit1 or is_submit2):
     st.stop()
 
 GAS_HW_kWhperL = 4200 * hw_temp_raise/(3600 * 1000 * boiler_hw_eff)
     #first do the current case
 #don't worry about fixed/non-fixed contract for now, or future energy costs
-costs_by_type = [['Current', 'Gas standing charge', gas_stand*3.65],
-                ['Current', 'Gas unit costs',  gas_total_kWh * gas_unit/100],
-                ['Current', 'Electricity standing charge', elec_stand*3.65],
-                ['Current', 'Electricity unit costs', elec_total_kWh * elec_unit/100]] 
+costs_by_type = [['Current', 'Gas standing', gas_stand*3.65],
+                ['Current', 'Gas unit',  gas_total_kWh * gas_unit/100],
+                ['Current', 'Elec. standing', elec_stand*3.65],
+                ['Current', 'Elec. unit', elec_total_kWh * elec_unit/100]] 
             
 costs_total = (gas_stand + elec_stand)*3.65 + gas_total_kWh * gas_unit/100 + elec_total_kWh * elec_unit/100
 
@@ -252,8 +186,9 @@ else:
 energy_usage = [['Current', 'Heating', gas_heat_kWh, gas_heat_kWh*GAS_kgCO2perkWh],
             ['Current', 'Hot water', gas_hw_kWh, gas_hw_kWh*GAS_kgCO2perkWh],
             ['Current', 'Cooking', gas_cook_kWh, gas_cook_kWh*GAS_kgCO2perkWh],
-            ['Current', 'Other Electricity', elec_total_kWh, elec_total_kWh*elec_kgCO2perkWh]]                
+            ['Current', 'Other Elec.', elec_total_kWh, elec_total_kWh*elec_kgCO2perkWh]]                
 
+energy_total = gas_total_kWh + elec_total_kWh
 emissions_total = sum([gas_heat_kWh*GAS_kgCO2perkWh, gas_hw_kWh*GAS_kgCO2perkWh, gas_cook_kWh*GAS_kgCO2perkWh, elec_total_kWh*elec_kgCO2perkWh])
 
 #now do the future/heat pump case
@@ -277,8 +212,9 @@ else:
 energy_usage_new = [['Heat Pump', 'Heating', elec_heat_kWh, elec_heat_kWh*elec_kgCO2perkWh],
             ['Heat Pump', 'Hot water', elec_hw_kWh, elec_hw_kWh*elec_kgCO2perkWh],
             ['Heat Pump', 'Cooking', gas_cook_kWh, emissions_cook],
-            ['Heat Pump', 'Other Electricity', elec_total_kWh, elec_total_kWh*elec_kgCO2perkWh]]   
+            ['Heat Pump', 'Other Elec.', elec_total_kWh, elec_total_kWh*elec_kgCO2perkWh]]   
 
+energy_total_new = elec_heat_kWh + elec_hw_kWh + gas_cook_kWh + elec_total_kWh
 emissions_total_new = sum([elec_heat_kWh*elec_kgCO2perkWh, elec_hw_kWh*elec_kgCO2perkWh, emissions_cook, elec_total_kWh*elec_kgCO2perkWh])
 
 if is_disconnect_gas:
@@ -286,11 +222,62 @@ if is_disconnect_gas:
 else:
     gas_stand_total_new = gas_stand*3.65
 
-costs_by_type_new = [['Heat Pump', 'Gas standing charge', gas_stand_total_new],
-                ['Heat Pump', 'Gas unit costs',  gas_total_kWh_new*gas_unit/100],
-                ['Heat Pump', 'Electricity standing charge', elec_stand*3.65],
-                ['Heat Pump', 'Electricity unit costs', elec_total_kWh_new*elec_unit/100]] 
+costs_by_type_new = [['Heat Pump', 'Gas standing', gas_stand_total_new],
+                ['Heat Pump', 'Gas unit',  gas_total_kWh_new*gas_unit/100],
+                ['Heat Pump', 'Elec. standing', elec_stand*3.65],
+                ['Heat Pump', 'Elec. unit', elec_total_kWh_new*elec_unit/100]] 
 
 costs_total_new = sum([gas_stand_total_new, gas_total_kWh_new*gas_unit/100, elec_stand*3.65, elec_total_kWh_new*elec_unit/100])
 
-show_results()
+st.header('Results')
+st.write('The impact of installing a heat pump (and any other changes entered above) on your annual bill, '
++'annual energy consumption and annual household emissions are summarized below.' +
+' Please remember that this is only an estimate and no estimate can be perfect. '
++ 'To read more about the assumptions that have gone into generating these estimates, please' +
+' take a look at the Advanced Settings tab at the top of the page.')
+# st.write("Installing a heat pump is expected to reduce your household annual CO2 emissions by "
+#         + f"**{(emissions_total-emissions_total_new)/1000:.2f} tonnes**, from "
+#         + f"**{emissions_total/1000:.2f} tonnes** to **{emissions_total_new/1000:.2f} tonnes**.")
+
+# if costs_total_new < costs_total:
+#     change_str = 'decrease'    
+# else:
+#     change_str = 'increase'
+    
+# st.write(f"Your annual energy costs are expected to {change_str} by "
+#         f"**£{abs(costs_total_new-costs_total):.0f}** from "
+#         + f"**£{costs_total:.0f}** to **£{costs_total_new:.0f}**.")
+
+
+df_costs = generate_df(costs_by_type, costs_by_type_new, ['Costs (£)'])
+df_energy = generate_df(energy_usage, energy_usage_new, ['Energy (kWh)', 'Emissions (kgCO2e)'])
+
+cost_change = (costs_total_new - costs_total)
+energy_change = (energy_total_new - energy_total)
+emissions_change = (emissions_total_new - emissions_total)
+cost_change_pc = 100 * (costs_total_new - costs_total) / costs_total
+energy_change_pc = 100 * (energy_total_new - energy_total) / energy_total
+emissions_change_pc = 100 * (emissions_total_new - emissions_total) / emissions_total
+change_str2 = lambda v : '+' if v > 0 else '-'
+
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.subheader('Costs')
+    st.metric('Annual Change', f"{change_str2(cost_change_pc)} £{abs(cost_change):.0f}", 
+    delta=f"{change_str2(cost_change_pc)} {abs(cost_change_pc):.0f}%", delta_color='inverse')
+    bars = make_stacked_bar_narrow(df_costs, 'Costs (£)', 1)
+    st.altair_chart(bars, use_container_width=True)
+with c2:
+    st.subheader('Energy Consumed')
+    st.metric('Annual Change', f"{change_str2(energy_change_pc)} {abs(energy_change):.0f} kWh", 
+    delta=f"{change_str2(energy_change_pc)} {abs(energy_change_pc):.0f}%", delta_color='inverse')
+    bars = make_stacked_bar_narrow(df_energy, 'Energy (kWh)')
+    st.altair_chart(bars, use_container_width=True)
+with c3: 
+    st.subheader('Emissions')
+    st.metric('Annual Change', f"{change_str2(emissions_change_pc)} {abs(emissions_change):.0f} kgCO2e", 
+    delta=f"{change_str2(emissions_change_pc)} {abs(emissions_change_pc):.0f}%", delta_color='inverse')
+    bars = make_stacked_bar_narrow(df_energy, 'Emissions (kgCO2e)')
+    st.altair_chart(bars, use_container_width=True)
+
+st.write('If you found this tool helpful - please share!')
