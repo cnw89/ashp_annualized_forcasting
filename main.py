@@ -53,8 +53,7 @@ with tab1:
     with c2:
         gas_total_kWh = st.number_input('Annual projected gas consumption (kWh).  Between 8000 - 16000 kWh is typical.', min_value=0, max_value=100000, value=12000, step=100)        
 
-    is_elec_renewable = st.checkbox('I have a 100% renewable energy tariff', value=True, 
-    help='Otherwise the annual average CO2 emissions for UK mains electricity in 2021 is used.')    
+    is_elec_renewable = st.checkbox('I have a 100% renewable energy tariff', value=True)    
 
     st.subheader('2.  Gas usage')
     st.write('We need to understand a little a bit about how you use gas to estimate the heating requirements for your home.'
@@ -67,7 +66,7 @@ with tab1:
             st.write('How much hot water does your household use in a typical day?')
             #+' Typical hot water usage is between X and Y per person per day.')
             gas_hw_lday = st.number_input('The UK average is 140 litres per person per day.  Enter the total litres/day here.', 
-            min_value=0, max_value=1000, value=420, step=1)
+            min_value=0, max_value=1000, value=350, step=1)
     with c2:
         
         is_cook_gas = st.checkbox('I cook with mains gas', value=False)
@@ -77,17 +76,17 @@ with tab1:
             gas_cook_kWhweek = st.number_input('A typical household uses between 5 and 12 kWh per week.  Enter total kWh/week here.', 
             min_value=0, max_value=100, value=8, step=1)
 
-    st.subheader('3.  Tips for other set-ups')       
-    ex = st.expander('I have a secondary heating source in addition to gas central heating')
-    with ex:
-        st.write('When getting a heat pump you could either continue to use these in the same manner, or have them removed and have the '
-        + 'heat pump supply all of your heating needs.  If you:'
-        + '1.  Have secondary gas heating (e.g.  a gas fireplace) that will be replaced by the heat pump, you can use this model as designed.' 
-        + '2.  Have secondary gas heating (e.g.  a gas fireplace) that will *not* be replaced by the heat pump...  '
-        + '3.  Have secondary electric heating that will be replaced by the heat pump...'
-        + '4.  Have secondary biomass heating that will be replaced by the heat pump...'
-        + '5.  Have secondary electric or biomas heating that will *not* be replaced by the heat pump, you can use this model as designed.'
-        )
+    st.subheader('3.  More complex set-ups')       
+    
+    is_second_heatsource = st.checkbox('I have a secondary heating source in addition to gas central heating', value=False)
+    
+    if is_second_heatsource:
+        opts = ['gas', 'electric', 'other (not included in energy consumption calculations below)']
+        second_heatsource_type = st.radio('My secondary heat source is:', opts)
+        opts = ['Keep using my secondary heat source', 'Remove the secondary heat source and have the heat pump supply this heat']
+        second_heatsource_remains = st.radio('In the heat pump scenario, I would...', opts)
+        is_second_heatsource_remains = (second_heatsource_remains == opts[0])
+        second_heatsource_kWh = st.number_input('Annual estimated energy usage of the secondary heatsource (kWh).  5% of your gas usage is used as an intial estimate.', min_value=0, max_value=100000, value=int(0.05*gas_total_kWh), step=10)
 
     ex = st.expander('I use solar thermal pannels to heat my hot water')
     with ex:
@@ -253,44 +252,76 @@ else:
 
 gas_heat_kWh = gas_total_kWh - gas_hw_kWh - gas_cook_kWh
 
+if is_second_heatsource:
+    if second_heatsource_type=='electric':
+        elec_heat_kWh = second_heatsource_kWh
+    else:
+        elec_heat_kWh = 0    
+    # elif second_heatsource_type=='other':
+    #     other_total_kWh = second_heatsource_kWh
+else:
+    elec_heat_kWh = 0
+
+elec_other_kWh = elec_total_kWh-elec_heat_kWh
+
 if is_elec_renewable:
     elec_kgCO2perkWh = ELEC_RENEW_kgCO2perkWh
 else:
     elec_kgCO2perkWh = ELEC_AVE_kgCO2perkWh
 
-energy_usage = [['Current', 'Heating', gas_heat_kWh, gas_heat_kWh*GAS_kgCO2perkWh],
+energy_usage = [['Current', 'Heating', gas_heat_kWh+elec_heat_kWh, gas_heat_kWh*GAS_kgCO2perkWh+elec_heat_kWh*elec_kgCO2perkWh],
             ['Current', 'Hot water', gas_hw_kWh, gas_hw_kWh*GAS_kgCO2perkWh],
             ['Current', 'Cooking', gas_cook_kWh, gas_cook_kWh*GAS_kgCO2perkWh],
-            ['Current', 'Other Elec.', elec_total_kWh, elec_total_kWh*elec_kgCO2perkWh]]                
+            ['Current', 'Other Elec.', elec_other_kWh, elec_other_kWh*elec_kgCO2perkWh]]                
 
 energy_total = gas_total_kWh + elec_total_kWh
 emissions_total = sum([gas_heat_kWh*GAS_kgCO2perkWh, gas_hw_kWh*GAS_kgCO2perkWh, gas_cook_kWh*GAS_kgCO2perkWh, elec_total_kWh*elec_kgCO2perkWh])
 
 #now do the future/heat pump case
-elec_heat_kWh = (1 - efficiency_boost/100) * gas_heat_kWh * boiler_heat_eff/hp_heat_scop
+if not is_second_heatsource:
+    elec_heat_kWh = (1 - efficiency_boost) * gas_heat_kWh * boiler_heat_eff/hp_heat_scop
+    gas_heat_kWh = 0
+else:
+    if is_second_heatsource_remains:
+        if second_heatsource_type=='gas':
+            elec_heat_kWh = (1 - efficiency_boost) * (gas_heat_kWh - second_heatsource_kWh) * boiler_heat_eff/hp_heat_scop
+            gas_heat_kWh = second_heatsource_kWh
+        elif second_heatsource_type=='electric':
+            elec_heat_kWh = second_heatsource_kWh + (1 - efficiency_boost) * gas_heat_kWh * boiler_heat_eff/hp_heat_scop
+            gas_heat_kWh = 0
+    else:
+        if second_heatsource_type=='electric':
+            elec_heat_kWh = (1 - efficiency_boost) * (gas_heat_kWh * boiler_heat_eff + second_heatsource_kWh)/hp_heat_scop
+            gas_heat_kWh = 0
+        elif second_heatsource_type=='gas': #same as the no second heatsource case, as we assume same efficiency as boiler
+            elec_heat_kWh = (1 - efficiency_boost) * gas_heat_kWh * boiler_heat_eff/hp_heat_scop
+            gas_heat_kWh = 0
+        else:#other second heatsource, assume gas boiler efficiency, but not included in gas_heat_kWh
+            elec_heat_kWh = (1 - efficiency_boost) * (gas_heat_kWh + second_heatsource_kWh) * boiler_heat_eff/hp_heat_scop
+            gas_heat_kWh = 0
+
 elec_hw_kWh = gas_hw_kWh * boiler_heat_eff/hp_hw_cop
 
-elec_total_kWh_new = elec_total_kWh + elec_heat_kWh + elec_hw_kWh
+elec_total_kWh_new = elec_other_kWh + elec_heat_kWh + elec_hw_kWh
+gas_total_kWh_new = gas_heat_kWh
 
 if is_cook_gas:
     if is_disconnect_gas:
         emissions_cook = gas_cook_kWh * elec_kgCO2perkWh
-        elec_total_kWh_new += gas_cook_kWh
-        gas_total_kWh_new = 0
+        elec_total_kWh_new += gas_cook_kWh        
     else:
         emissions_cook = gas_cook_kWh * GAS_kgCO2perkWh
-        gas_total_kWh_new = gas_cook_kWh
+        gas_total_kWh_new += gas_cook_kWh
 else:
-    emissions_cook = 0
-    gas_total_kWh_new = 0
+    emissions_cook = 0    
 
-energy_usage_new = [['Heat Pump', 'Heating', elec_heat_kWh, elec_heat_kWh*elec_kgCO2perkWh],
+energy_usage_new = [['Heat Pump', 'Heating', gas_heat_kWh+elec_heat_kWh, gas_heat_kWh*GAS_kgCO2perkWh+elec_heat_kWh*elec_kgCO2perkWh],
             ['Heat Pump', 'Hot water', elec_hw_kWh, elec_hw_kWh*elec_kgCO2perkWh],
             ['Heat Pump', 'Cooking', gas_cook_kWh, emissions_cook],
             ['Heat Pump', 'Other Elec.', elec_total_kWh, elec_total_kWh*elec_kgCO2perkWh]]   
 
-energy_total_new = elec_heat_kWh + elec_hw_kWh + gas_cook_kWh + elec_total_kWh
-emissions_total_new = sum([elec_heat_kWh*elec_kgCO2perkWh, elec_hw_kWh*elec_kgCO2perkWh, emissions_cook, elec_total_kWh*elec_kgCO2perkWh])
+energy_total_new = elec_heat_kWh + elec_hw_kWh + gas_cook_kWh + elec_other_kWh
+emissions_total_new = sum([elec_heat_kWh*elec_kgCO2perkWh, elec_hw_kWh*elec_kgCO2perkWh, emissions_cook, elec_other_kWh*elec_kgCO2perkWh])
 
 if is_disconnect_gas:
     gas_stand_total_new = 0
