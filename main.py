@@ -49,9 +49,9 @@ with tab1:
 
     c1, c2 = st.columns(2)        
     with c1:
-        elec_total_kWh = st.number_input('Annual projected electricity consumption (kWh).  Between 2500 - 3700 kWh is typical.', min_value=0, max_value=100000, value=2900, step=100)
+        elec_total_kWh = st.number_input('Annual electricity consumption (kWh).  Between 2500 - 3700 kWh is typical.', min_value=0, max_value=100000, value=2900, step=100)
     with c2:
-        gas_total_kWh = st.number_input('Annual projected gas consumption (kWh).  Between 8000 - 16000 kWh is typical.', min_value=0, max_value=100000, value=12000, step=100)        
+        gas_total_kWh = st.number_input('Annual gas consumption (kWh).  Between 8000 - 16000 kWh is typical.', min_value=0, max_value=100000, value=12000, step=100)        
 
     is_elec_renewable = st.checkbox('I have a 100% renewable energy tariff', value=True)    
 
@@ -88,18 +88,14 @@ with tab1:
         is_second_heatsource_remains = (second_heatsource_remains == opts[0])
         second_heatsource_kWh = st.number_input('Annual estimated energy usage of the secondary heatsource (kWh).  5% of your gas usage is used as an intial estimate.', min_value=0, max_value=100000, value=int(0.05*gas_total_kWh), step=10)
 
+    ex = st.expander('I generate some of my own electricity')
+    with ex:
+        st.write('When entering the annual electricity consumption above, only input the annual *imported* electricity. The results below will then only relate to the imported energy and emissions.')
+
     ex = st.expander('I use solar thermal pannels to heat my hot water')
     with ex:
         st.write('Typically solar thermal energy does not provide all of your hot water heating needs.  In this case you should reduce the '
         +'hot water usage above to the fraction that will be heated by gas or the heat pump on an average day (across the whole year).')
-
-    ex = st.expander('I generate some of my own electricity')
-    with ex:
-        st.write('1.  If you generate your electricity from solar energy, then bear in mind that the majority of the heating needed is '
-        + 'during the winter when solar energy generation is at its lowest.  Therefore solar power will only reduce the cost of heating'
-        + ' a small amount.  However it can provide energy for hot water heating outside the winter months, reducing costs there provided that '
-        + 'the additional energy demand fits within your supply.'
-        + '2.  If you generate your electricity from wind then...  ')
 
     st.subheader('4.  Switching to a heat pump')
     st.write('The efficiency of a heat pump can vary considerably between different installations, depending on the quality of the installation.  ' 
@@ -143,11 +139,6 @@ with tab2:
     gas_unit = 10.3
     elec_stand = 46.0
     elec_unit = 34.0
-
-    # st.write('If you have a fixed tariff')
-    # ex = st.expander('I want to know more about the energy price caps')
-    # with ex:
-    #     st.write('From October 2022 ')
 
     op1 = 'Use the UK average domestic energy price cap for October 2022'
     op2 = 'Use custom unit and standing charges'
@@ -229,16 +220,12 @@ else:
     hp_hw_cop = hp_hw_cop_typ
 
 #first do the current case
-#don't worry about fixed/non-fixed contract for now, or future energy costs
 costs_by_type = [['Current', 'Gas standing', gas_stand*3.65],
                 ['Current', 'Gas unit',  gas_total_kWh * gas_unit/100],
                 ['Current', 'Elec.  standing', elec_stand*3.65],
                 ['Current', 'Elec.  unit', elec_total_kWh * elec_unit/100]] 
             
 costs_total = (gas_stand + elec_stand)*3.65 + gas_total_kWh * gas_unit/100 + elec_total_kWh * elec_unit/100
-
-#gas_total_kWh = (gas_bill*12 - gas_stand*3.65)/(gas_unit/100)
-#elec_total_kWh = (elec_bill*12 - elec_stand*3.65)/(elec_unit/100)
 
 if is_hw_gas:
     gas_hw_kWh = gas_hw_lday * 365 * GAS_HW_kWhperL
