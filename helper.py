@@ -55,12 +55,12 @@ def make_stacked_bar_narrow(source, value_name, col_scheme=2):
     color=alt.Color('Breakdown:N', legend=alt.Legend(
         orient='bottom', #legendX=0, legendY=400,        
         direction='vertical'),    
-        scale=alt.Scale(scheme=col_scheme)),
-    order=alt.Order(value_name, sort='descending')
-    ).properties(width='container', height=400 #title=titleStr,
+        scale=alt.Scale(scheme=col_scheme))
+    ).properties(width='container', height=500 #title=titleStr,
     ).configure_axis(titleFontSize=16, labelFontSize=14
     ).configure_legend(titleFontSize=16, labelFontSize=14)#.configure_title(fontSize=18
     #)
+    #order=alt.Order(value_name, sort='descending')
 
     # text = alt.Chart(source).mark_text(dx=-15, dy=3, color='white').encode(
     #     x=alt.X('sum(' + value_name + '):Q', stack='zero'),
