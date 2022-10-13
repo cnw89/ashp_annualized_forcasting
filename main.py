@@ -57,8 +57,8 @@ st.sidebar.table(df_cook)
 
 #___________Main page__________________________________________
 st.title('Heat Pump Running Costs and Emissions Estimator')    
-st.write('Use this tool to compare how a heat pump could change your annual energy bills and CO2 emissions. '
-+ 'Enter some information below, and once you are ready, press the Update Results button at the bottom to see the comparison.' +
+st.write('Use this tool to compare how a heat pump could change your annual energy bills and CO2 emissions.  '
++ 'Enter some information below, and once you are ready, press the Update Results button at the bottom to see the comparison.  ' +
 'This tool is currently only suited to those who use a gas boiler as the main source of heat for their house.')
 st.write('To see how an estimate of the cost of installing a heat pump, see the Nesta tool here: http://asf-hp-cost-demo-l-b-1046547218.eu-west-1.elb.amazonaws.com/')
 #st.header('Inputs')
@@ -82,11 +82,11 @@ with tab1:
     is_elec_renewable = st.checkbox('I have a 100% renewable energy tariff', value=True)    
 
     st.subheader('2.  Hot water usage')
-    st.write('How is your hot water heated? If you have solar thermal panels to heat your hot water, select the source which tops-up the temperature when needed.')
+    st.write('How is your hot water heated?  If you have solar thermal panels to heat your hot water, select the source which tops-up the temperature when needed.')
     hw_source = st.radio('Hot water heat source:', ['gas', 'electricity (immersion heater or electric boiler)'])
     is_hw_gas = (hw_source=='gas')
 
-    st.write('How much hot water does your household use in a typical day? *You can find some reference values in the sidebar to the left to help here.*')
+    st.write('How much hot water does your household use in a typical day?  *You can find some reference values in the sidebar to the left to help here.*')
     hw_lday = st.number_input('The UK average is 140 litres per person per day.  Enter the total litres/day here:', 
     min_value=0, max_value=1000, value=350, step=1)
 
@@ -176,16 +176,16 @@ with tab2:
     #TODO: could potentially include immersion heating efficiency here
     with c1:
         st.write('_Average boiler efficiency_')
-        boiler_heat_eff = st.number_input('When space heating:', min_value=0.0, max_value=1.00, value=boiler_heat_eff, step=0.01)
-        boiler_hw_eff = st.number_input('When hot water heating:', min_value=0.0, max_value=1.00, value=boiler_hw_eff, step=0.01)
+        boiler_heat_eff = st.number_input('When space heating:', min_value=0.0, max_value=1.00, value=boiler_heat_eff, step=0.01, key='boiler1')
+        boiler_hw_eff = st.number_input('When hot water heating:', min_value=0.0, max_value=1.00, value=boiler_hw_eff, step=0.01, key='boiler2')
     with c2:
         st.write('*Typical heat pump SCOP*')
-        hp_heat_scop_typ = st.number_input('When space heating:', min_value=0.1, max_value=10.0, value=hp_heat_scop_typ, step=0.1, key='typ')
-        hp_hw_cop_typ = st.number_input('When hot water heating:', min_value=0.1, max_value=10.0, value=hp_hw_cop_typ, step=0.1, key='typ')
+        hp_heat_scop_typ = st.number_input('When space heating:', min_value=0.1, max_value=10.0, value=hp_heat_scop_typ, step=0.1, key='typ1')
+        hp_hw_cop_typ = st.number_input('When hot water heating:', min_value=0.1, max_value=10.0, value=hp_hw_cop_typ, step=0.1, key='typ2')
     with c3:
         st.write('*High-performance heat pump SCOP*')
-        hp_heat_scop_hi = st.number_input('When space heating:', min_value=0.1, max_value=10.0, value=hp_heat_scop_hi, step=0.1, key='hi')
-        hp_hw_cop_hi = st.number_input('When hot water heating:', min_value=0.1, max_value=10.0, value=hp_hw_cop_hi, step=0.1, key='hi')
+        hp_heat_scop_hi = st.number_input('When space heating:', min_value=0.1, max_value=10.0, value=hp_heat_scop_hi, step=0.1, key='hi1')
+        hp_hw_cop_hi = st.number_input('When hot water heating:', min_value=0.1, max_value=10.0, value=hp_hw_cop_hi, step=0.1, key='hi2')
 
     st.subheader('3.  Hot Water Temperature')
     st.write('Typical mains cold water may be at 15$^{\circ}$C, while a comfortable shower temperature is 37-38$^{\circ}$C.  The gas boiler '
@@ -379,12 +379,12 @@ costs_total_new = sum([gas_stand_total_new, gas_total_kWh_new*gas_unit/100, elec
 st.header('Results')
 st.write('The impact of installing a heat pump (and any other changes entered above) on your annual bill, '
 +'annual energy consumption and annual household emissions are summarized below.' +
-' Please remember that these are only estimates and no estimate can be perfect.  '
+'  Please remember that these are only estimates and no estimate can be perfect.  '
 + 'The costs of energy are changing rapidly at the moment in the UK, so the cost of energy may be significantly'
 + ' different by the time you have a heat pump installed.  To give the simplest, like-for-like comparison, '
 + 'we use a constant price of energy for the whole year based on the most recent domestic energy price cap.'
-+ ' These costs should only be used comparatively between the two cases and may be quite different from your energy bill in previous years.  '
-+ ' You can edit the price of energy used in the Advanced Settings tab at the top of the page, where you will also find '
++ '  These costs should only be used comparatively between the two cases and may be quite different from your energy bill in previous years.  '
++ '  You can edit the price of energy used in the Advanced Settings tab at the top of the page, where you will also find '
 + 'more information on the assumptions that have gone into generating these estimates.')
 
 #calculate key values to show...
