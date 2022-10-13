@@ -58,7 +58,8 @@ st.sidebar.table(df_cook)
 #___________Main page__________________________________________
 st.title('Heat Pump Running Costs and Emissions Estimator')    
 st.write('Use this tool to compare how a heat pump could change your annual energy bills and CO2 emissions. '
-+ 'Enter some information below, and once you are ready, press the Update Results button at the bottom to see the comparison.')
++ 'Enter some information below, and once you are ready, press the Update Results button at the bottom to see the comparison.' +
+'This tool is currently only suited to those who use a gas boiler as the main source of heat for their house.')
 st.write('To see how an estimate of the cost of installing a heat pump, see the Nesta tool here: http://asf-hp-cost-demo-l-b-1046547218.eu-west-1.elb.amazonaws.com/')
 #st.header('Inputs')
 
