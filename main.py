@@ -41,11 +41,13 @@ about_markdown = 'This app has been developed by Chris Warwick, August 2022.'
 st.set_page_config(layout="centered", menu_items={'Get Help': None, 'Report a Bug': None, 'About': about_markdown})
 
 #__________write some reference info to the sidebar____________
-FILENAME_HW = 'hw_usage_examples.csv'
-df_hw = pd.read_csv(FILENAME_HW, index_col=0)
+df_hw = pd.DataFrame([['Washing up', 15], ['5 min water-saving shower', 30], ['10 min power shower', 150], ['Bath', 100]],
+columns=['Use', 'Hot water used (L)'])
+df_hw.set_index('Use', inplace=True)
 
-FILENAME_COOK = 'cook_usage_examples.csv'
-df_cook = pd.read_csv(FILENAME_COOK, index_col=0)
+df_cook = pd.DataFrame([['Gas hob', 0.8], ['Gas grill', 1], ['Gas oven', 1.5]],
+columns=['Use', 'Gas consumption per use (kWh)'])
+df_cook.set_index('Use', inplace=True)
 
 st.sidebar.header('Reference information')
 st.sidebar.write('**Some typical amounts of water for different uses.**')
