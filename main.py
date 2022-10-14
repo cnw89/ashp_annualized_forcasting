@@ -15,7 +15,7 @@ hp_heat_scop_hi = 3.8
 hp_hw_cop_hi = 2.7
 
 #Raise in temp (degC) from mains water to hot water AS USED
-hw_temp_raise_default = 22
+hw_temp_raise_default = 23
 
 #carbon intensity values taken from SAP 10.2 (dec 2021)
 GAS_kgCO2perkWh = 0.21
@@ -29,15 +29,15 @@ elec_stand = 46.0
 elec_unit = 34.0
 
 # efficincy measures to choose from
-efficiency_opts = [('Draft proofing and/or door insulation (3% heating demand reduction)', 0.03),
-                    ('Increased loft insulation (5% heating demand reduction)', 0.05),
-                    ('Improved window glazing (5% heating demand reduction)', 0.05),
-                    ('Cavity wall insulation (10% heating demand reduction)', 0.1),
-                    ('Underfloor insulation (10% heating demand reduction)', 0.1),
-                    ('Internal or external solid wall insulation (15% heating demand reduction)', 0.15)]
+efficiency_opts = [('Draft proofing and/or door insulation (3%)', 0.03),
+                    ('Increased loft insulation (5%)', 0.05),
+                    ('Improved window glazing (5%)', 0.05),
+                    ('Cavity wall insulation (10%)', 0.1),
+                    ('Underfloor insulation (10%)', 0.1),
+                    ('Internal or external solid wall insulation (15%)', 0.15)]
 #____________ Page info________________________________________
 
-about_markdown = 'This app has been developed by Chris Warwick, August 2022.'
+about_markdown = 'This app has been developed by Chris Warwick, August-October 2022.'
 st.set_page_config(layout="centered", menu_items={'Get Help': None, 'Report a Bug': None, 'About': about_markdown})
 
 #__________write some reference info to the sidebar____________
@@ -57,10 +57,10 @@ st.sidebar.table(df_cook)
 
 #___________Main page__________________________________________
 st.title('Heat Pump Running Costs and Emissions Estimator')    
-st.write('Use this tool to compare how a heat pump could change your annual energy bills and CO2 emissions.  '
+st.write('Use this tool to compare how a heat pump could change your annual energy bills and CO$_2$ emissions.  '
 + 'Enter some information below, and once you are ready, press the Update Results button at the bottom to see the comparison.  ' +
 'This tool is currently only suited to those who use a gas boiler as the main source of heat for their house.')
-st.write('To see how an estimate of the cost of installing a heat pump, see the Nesta tool here: http://asf-hp-cost-demo-l-b-1046547218.eu-west-1.elb.amazonaws.com/')
+st.write('To calculate an estimate of the cost of installing a heat pump, see the Nesta tool here: http://asf-hp-cost-demo-l-b-1046547218.eu-west-1.elb.amazonaws.com/')
 #st.header('Inputs')
 
 #Now go to main tabs
@@ -77,9 +77,9 @@ with tab1:
     with c1:
         elec_total_kWh = st.number_input('Annual electricity consumption (kWh).  Between 2500 - 3700 kWh is typical.', min_value=0, max_value=100000, value=2900, step=100)
     with c2:
-        gas_total_kWh = st.number_input('Annual gas consumption (kWh).  Between 8000 - 16000 kWh is typical.', min_value=0, max_value=100000, value=12000, step=100)        
+        gas_total_kWh = st.number_input('Annual gas consumption (kWh).  Between 8000 - 16000 kWh is typical, but some have much higher.', min_value=0, max_value=100000, value=12000, step=100)        
 
-    is_elec_renewable = st.checkbox('I have a 100% renewable energy tariff', value=True)    
+    is_elec_renewable = st.checkbox('I have a 100% renewable energy tariff', value=False)    
 
     st.subheader('2.  Hot water usage')
     st.write('How is your hot water heated?  If you have solar thermal panels to heat your hot water, select the source which tops-up the temperature when needed.')
@@ -126,13 +126,23 @@ with tab1:
     op2 = 'Assume a high-performance heat pump installation'
     hp_quality = st.radio('Heat pump installation quality:',[op1, op2])
     is_hi_quality_hp = (hp_quality == op2)
+    with st.expander('Tell me more about high-performance installations'):
+        st.write(
+            """
+            High-performance installations typically include design features such as:
+            - A low operating flow temperature (e.g. 35$^\circ$C), utilising larger radiators if necessary
+            - Flow controls designed to minimising cycling of the heat pump (regular switching on and off)
+            - Weather compensation control 
+            - Many other aspects of the system designed and installed to best practice 
+            """
+            )
 
     st.write('Some efficiency measures are often implemented prior to or as part of a heat pump installation.' +
     ' Optionally, you can take these into account here.')    
     
     efficiency_boost = 0
-    with st.expander('Energy efficiency measures'): #there are heating efficiency measures implemented...        
-        st.write('Heating demand changes are approximate.')
+    with st.expander('Energy efficiency measures'):         
+        st.write('Approximate heating demand reduction for each measure is shown in brackets, based on average measured reductions in heat demand rather than quoted reductions.')
         
         #make a checkbox for each efficiency boost we have:
         for (lab, boost) in efficiency_opts:
@@ -150,7 +160,7 @@ with tab2:
 
     st.subheader('1.  Energy prices')
 
-    op1 = 'Use the UK average domestic energy price cap for October 2022'
+    op1 = 'Use the UK-average domestic energy price cap for direct debit paying customers for the period beginning October 2022'
     op2 = 'Use custom unit and standing charges'
 
     charge_option = st.radio('Prices to use:',[op1, op2])
@@ -198,7 +208,7 @@ with tab3:
     #____________ Further Information____________________________
     st.subheader('1.  Carbon intensity')
     st.write("We use standard values for carbon intensity of different energy sources as set in the Standard Assessment Procedure (SAP) 10.2, "
-    +"released December 2021.  These values only consider the CO_2 equivalent emissions associated per unit of energy, not the embedded emissions of the "
+    +"released December 2021.  These values only consider the $CO_2$ equivalent emissions associated per unit of energy, not the embedded emissions of the "
     + "energy generation and transmission infrastructure.  These values are: ")
     costs_table = pd.DataFrame([['Mains Gas', GAS_kgCO2perkWh], ['Electricity (grid average)', ELEC_AVE_kgCO2perkWh],
     ['Electricity (renewable only)', ELEC_RENEW_kgCO2perkWh]], columns=['Energy Source', 'CO2 Equivalent Emissions (kgCO2/kWh)'])
@@ -214,11 +224,11 @@ with tab3:
     1. Switching from a boiler to a heat pump may change your heat demand independently of any energy saving measures you implement, for example you may save energy by overshooting the set temperature less, or you may have a different set temperature at night.
     2. Atypical annual variation in heating demand will result in different heat pump performance, as will weather conditions different from the UK average.
     3. Switching from a combi boiler to a heat pump will require you to install a hot water storage tank, which will impact the efficiency of heating hot water - some heat will be lost while storing the water, but less will be lost while waiting for the water to heat up on demand.
-    4. Switching from gas to electric cooking (if you select Gas cooking and disconnect from mains gas options) will change the energy demand of your cooking - electric is typically more efficient.       
+    4. Switching from gas to electric cooking (if you select gas cooking and disconnect from mains gas options) will change the energy demand of your cooking - electric is typically more efficient.       
     """
     )
 
-is_submit1 = st.button(label='Update results', key='b1')
+is_submit1 = st.button(label='Update results')
 
 #don't proceed until Update results has been pressed
 if not is_submit1:
