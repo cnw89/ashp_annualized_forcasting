@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
-from helper import generate_df, make_stacked_bar_narrow, make_stacked_bar_horiz
+from helper import generate_df, make_stacked_bar_horiz
+from PIL import Image
 
 #__________ set default values______________
 #efficiencies and performance coefficients - default values
@@ -56,17 +57,20 @@ st.sidebar.write('**Some typical amounts of energy used for cooking with gas app
 st.sidebar.table(df_cook)
 
 #___________Main page__________________________________________
-st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
+
 st.title('Heat Pump Running Costs and Emissions Estimator')    
+
+img = Image.open('heat pump close up edit.JPG')
+st.image(img)
+
 st.write('Use this tool to compare how a heat pump could change your annual energy bills and CO$_2$ emissions.  '
 + 'Enter some information below, and once you are ready, press the *Update Results* button at the bottom to see the comparison.  ' +
 'This tool is currently only suited to those who use a gas boiler as the main source of heat for their house.')
 st.write('To calculate an estimate of the cost of installing a heat pump, see the Nesta tool here: http://asf-hp-cost-demo-l-b-1046547218.eu-west-1.elb.amazonaws.com/')
 #st.header('Inputs')
-
+st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
 #Now go to main tabs
 tab1, tab2, tab3 = st.tabs(["Basic Settings", "Advanced Settings", "Further Information"])
-
 
 with tab1:
     #_______________basic settings_________________________________________
@@ -383,6 +387,13 @@ do_heat_pump_case('Typical', gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, elec_hw_kW
 
 energy_usage_hi, costs_by_type_hi, energy_total_hi, emissions_total_hi, costs_total_hi = \
 do_heat_pump_case('Hi-performance', gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, elec_hw_kWh)
+
+#if no gas heating, just delete cooking data entries (index 2):
+if not is_cook_gas:
+    energy_usage.pop(2)
+    energy_usage_hi.pop(2)
+    energy_usage_typ.pop(2)
+
 #_______________Present results_________________________
 
 st.header('Results')
