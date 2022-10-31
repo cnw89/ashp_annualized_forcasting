@@ -1,7 +1,29 @@
+# HEAT PUMP RUNNING COSTS AND EMISSIONS ESTIMATOR
+# A calculator for estimating the impact of upgrading from a gas boiler 
+# to a heat pump on running costs, CO2 emissions and energy used.
+#
+# Copyright (C) 2022  Chris Warwick, Green Heat Coop Ltd.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# For enquiries about using this source code, please contact:
+# hello@greenheatcoop.co.uk
+
 import streamlit as st
 import pandas as pd
 from helper import generate_df, make_stacked_bar_horiz
 from PIL import Image
+
 
 #__________ set default values______________
 #efficiencies and performance coefficients - default values
@@ -35,13 +57,25 @@ efficiency_opts = [('Draft proofing and/or door insulation (3%)', 0.03),
                     ('Improved window glazing (5%)', 0.05),
                     ('Cavity wall insulation (10%)', 0.1),
                     ('Underfloor insulation (10%)', 0.1),
-                    ('Internal or external solid wall insulation (15%)', 0.15)]
+                    ('Internal or external solid wall insulation (15%)', 0.15),
+                    ('Enter a custom heating demand saving', -1.0)]
 #____________ Page info________________________________________
 
-about_markdown = 'This app has been developed by Chris Warwick, August-October 2022.'
+about_markdown = 'This app has been developed by Chris Warwick, August-October 2022, for Green Heat Coop Ltd. ' + \
+'(www.greenheatcoop.co.uk). For enquiries about this tool you can email hello@greenheatcoop.co.uk, or message' + \
+    ' @greenheatcoop on Twitter, Facebook, or Nextdoor. This program is free software: you can redistribute it and/or modify' + \
+' it under the terms of the GNU General Public License as published by the Free Software Foundation, version 3 of the License.'
+
 st.set_page_config(layout="centered", menu_items={'Get Help': None, 'Report a Bug': None, 'About': about_markdown})
 
 #__________write some reference info to the sidebar____________
+
+df_tot = pd.DataFrame([['1', 2100, 7000], ['2', 2750, 9500], 
+                        ['3', 3000, 12000], ['4', 3500, 15000],
+                        ['5', 4300, 17000]],
+                        columns=['House size', 'Electricity (kWh)', 'Gas (kWh)'])
+df_tot.set_index('House size', inplace=True)                        
+
 df_hw = pd.DataFrame([['Washing up', 15], ['5 min water-saving shower', 30], ['10 min power shower', 150], ['Bath', 100]],
 columns=['Use', 'Hot water used (L)'])
 df_hw.set_index('Use', inplace=True)
@@ -51,10 +85,12 @@ columns=['Use', 'Gas consumption per use (kWh)'])
 df_cook.set_index('Use', inplace=True)
 
 st.sidebar.header('Reference information')
-st.sidebar.write('**Some typical amounts of water for different uses**')
+st.sidebar.subheader('Typical total annual household energy consumption by number of bedrooms')
+st.sidebar.table(df_tot.style.format("{:,d}"))
+st.sidebar.subheader('Typical amounts of water for different uses')
 st.sidebar.table(df_hw)
-st.sidebar.write('**Some typical amounts of energy used for cooking with gas appliances**')
-st.sidebar.table(df_cook)
+st.sidebar.subheader('Typical amounts of energy used for cooking with gas appliances')
+st.sidebar.table(df_cook.style.format(precision=1))
 
 #___________Main page__________________________________________
 
@@ -66,7 +102,8 @@ st.image(img)
 st.write('Use this tool to compare how a heat pump could change your annual energy bills and CO$_2$ emissions.  '
 + 'Enter some information below, and once you are ready, press the *Update Results* button at the bottom to see the comparison.  ' +
 'This tool is currently only suited to those who use a gas boiler as the main source of heat for their house.')
-st.write('To calculate an estimate of the cost of installing a heat pump, see the Nesta tool here: http://asf-hp-cost-demo-l-b-1046547218.eu-west-1.elb.amazonaws.com/')
+st.markdown('To calculate an estimate of the cost of installing a heat pump, see the Nesta demo tool ' +
+'<a href="http://asf-hp-cost-demo-l-b-1046547218.eu-west-1.elb.amazonaws.com/">here</a>.', unsafe_allow_html=True)
 #st.header('Inputs')
 st.markdown("<div id='linkto_top'></div>", unsafe_allow_html=True)
 #Now go to main tabs
@@ -75,16 +112,30 @@ tab1, tab2, tab3 = st.tabs(["Basic Settings", "Advanced Settings", "Further Info
 with tab1:
     #_______________basic settings_________________________________________
     st.subheader('1.  Annual energy consumption')
-    st.write('Enter your projected annual energy consumption, which should be available on your energy bill.' +
-    ' To customize the energy tariff used, see the *Advanced Settings* tab.')
+
+    st.write('Your projected annual energy consumption should be available on your energy bill. If you do not know ' +
+    'your annual energy consumption, you can use the typical values for your house size shown in the sidebar to the left.')
+    # is_know_annual = st.radio('Do you know your annual energy consumption for electricity and gas?', ['Yes', 'No'])
+     
+    # if is_know_annual is 'Yes':
 
     c1, c2 = st.columns(2)        
     with c1:
-        elec_total_kWh = st.number_input('Annual electricity consumption (kWh).  Between 2500 - 3700 kWh is typical.', min_value=0, max_value=100000, value=2900, step=100)
+        elec_total_kWh = st.number_input('Annual electricity consumption (kWh):', min_value=0, max_value=100000, value=3000, step=100)
     with c2:
-        gas_total_kWh = st.number_input('Annual gas consumption (kWh).  Between 8000 - 16000 kWh is typical, but some have much higher.', min_value=0, max_value=100000, value=12000, step=100)        
+        gas_total_kWh = st.number_input('Annual gas consumption (kWh):', min_value=0, max_value=100000, value=12000, step=100)        
 
     is_elec_renewable = st.checkbox('I have a 100% renewable energy tariff', value=False)    
+    
+    with st.expander('More about renewable energy tariffs'):
+        st.markdown('Please note that not all "100% renewable" energy tariffs are equivalent. For example some suppliers invest in ' +
+        'renewable energy production, while others only buy unwanted renewable energy certificates. You can learn more about this ' +
+        "<a href='https://www.cse.org.uk/advice/advice-and-support/green-electricity-tariffs'>here</a>. In this tool we take a 100% renewable" +
+        ' tariff to have zero carbon emissions, otherwise we use the emissions of the general energy mix of the grid. We leave it to you to decide' +
+        ' which is more appropriate for your tariff. This also means that the embedded carbon emissions of the grid and energy generators is not accounted for here.',
+        unsafe_allow_html=True)
+
+    st.write(' To customize the energy tariff used, see the *Advanced Settings* tab.')
 
     st.subheader('2.  Hot water usage')
     st.write('How is your hot water heated?  If you have solar thermal panels to heat your hot water, select the source which tops-up the temperature when needed.')
@@ -96,6 +147,7 @@ with tab1:
     min_value=0, max_value=1000, value=350, step=1)
 
     st.subheader('3.  Cooking')
+    st.write('If you cook with gas, we would like to know how much to help calculate the energy used for heating.')
     is_cook_gas = st.checkbox('I cook with mains gas', value=False)
 
     if is_cook_gas:
@@ -119,7 +171,7 @@ with tab1:
     with st.expander('I generate some of my own electricity'):
         st.write('When entering the annual electricity consumption above, only input the annual *imported* electricity. The results below will then only relate to the imported energy and emissions.')
 
-    with st.expander('I use solar thermal pannels to heat my hot water'):
+    with st.expander('I use solar thermal panels to heat my hot water'):
         st.write('Typically solar thermal energy does not provide all of your hot water heating needs.  In this case you should reduce the '
         +'hot water usage above to the fraction that will be heated by other sources on an average day (across the whole year).')
 
@@ -130,14 +182,21 @@ with tab1:
     
     efficiency_boost = 0
     with st.expander('Energy efficiency measures'):         
-        st.write('Approximate heating demand reduction for each measure is shown in brackets, based on average measured reductions in heat demand rather than quoted reductions.')
+        st.write('Select the energy efficiency measures to be imlpemented.' +
+        ' Approximate heating demand reduction for each measure is shown in brackets. These are conservative estimates based on average *measured*' +
+         ' reductions in heat demand rather than quoted reductions, which includes for example the effect of households choosing more comfortable heating settings' +
+         ' once their energy bill reduces. Alternatively you can enter a custom heating demand reduction by selecting the last checkbox.')
         
         #make a checkbox for each efficiency boost we have:
         for (lab, boost) in efficiency_opts:
 
             is_op = st.checkbox(lab, value=False)
             if is_op:
-                efficiency_boost += boost                
+                if boost < 0: #custom option selected
+                    custom_val = st.number_input('Enter percentage saving:', 0.0, 100.0, 20.0, 1.0)
+                    efficiency_boost += custom_val/100
+                else:
+                    efficiency_boost += boost                
         
     st.write('If you can disconnect from gas completely, you may save money by not paying the gas standing charge.  Any gas fireplace, '
     + 'gas hobs, or gas oven would need to be removed and replaced with electric appliances or simply disconnected.')
@@ -217,6 +276,21 @@ with tab3:
     )
 
 is_submit1 = st.button(label='Update results')
+result_container = st.container()
+
+#leave some whitespace before adding the footer...
+st.write('')
+st.write('')
+st.write('')
+st.write('')
+st.write('')
+st.write('')
+st.markdown("This tool is a project of <a href='https://www.greenheatcoop.co.uk'>Green Heat Coop</a>.", unsafe_allow_html=True)
+img = Image.open('web_banner.png')
+st.image(img)
+
+st.markdown("<a href='#linkto_top'>^ Back to top ^</a>", unsafe_allow_html=True)
+
 
 #don't proceed until Update results has been pressed
 if not is_submit1:
@@ -396,87 +470,85 @@ if not is_cook_gas:
 
 #_______________Present results_________________________
 
-st.header('Results')
-st.write('The impact of installing a heat pump (and any other changes entered above) on your annual energy **costs**, '
-+'**CO$_2$ emissions** and **energy usage** are summarized below, for both a typical installation and a high-performing one.' +
-'  Please remember that these are only estimates and no estimate can be perfect.  '
-+ 'You can find '
-+ 'more information on the assumptions that have gone into generating these estimates on the *Further Information* tab.')
+with result_container:
+    st.header('Results')
+    st.write('The impact of installing a heat pump (and any other changes entered above) on your annual energy **costs**, '
+    +'**CO$_2$ emissions** and **energy usage** are summarized below, for both a typical installation and a high-performing one.' +
+    '  Please remember that these are only estimates and no estimate can be perfect.  '
+    + 'You can find '
+    + 'more information on the assumptions that have gone into generating these estimates on the *Further Information* tab.')
 
-with st.expander('Tell me more about high-performance installations'):
-    st.write(
-        """
-        High-performance installations typically include design features such as:
-        - A low operating flow temperature (e.g. 35$^\circ$C), utilising larger radiators if necessary
-        - Flow controls designed to minimising cycling of the heat pump (regular switching on and off)
-        - Weather compensation control 
-        - Many other aspects of the system designed and installed to best practice 
-        """
-        )
+    with st.expander('Tell me more about high-performance installations'):
+        st.write(
+            """
+            High-performance installations typically include design features such as:
+            - A low operating flow temperature (e.g. 35$^\circ$C), utilising larger radiators if necessary
+            - Flow controls designed to minimising cycling of the heat pump (regular switching on and off)
+            - Weather compensation control 
+            - Many other aspects of the system designed and installed to best practice 
+            """
+            )
 
-#calculate key values to show...
-df_costs = generate_df(costs_by_type, [costs_by_type_typ, costs_by_type_hi], ['Costs (£)'])
-df_energy = generate_df(energy_usage, [energy_usage_typ, energy_usage_hi], ['Energy (kWh)', 'Emissions (kg of CO2)'])
+    #calculate key values to show...
+    df_costs = generate_df(costs_by_type, [costs_by_type_typ, costs_by_type_hi], ['Costs (£)'])
+    df_energy = generate_df(energy_usage, [energy_usage_typ, energy_usage_hi], ['Energy (kWh)', 'Emissions (kg of CO2)'])
 
-#present costs, energy consumed and emissions side-by-side
-change_str2 = lambda v : '+' if v > 0 else '-'
+    #present costs, energy consumed and emissions side-by-side
+    change_str2 = lambda v : '+' if v > 0 else '-'
 
-st.subheader('1. Annual Energy Costs')
+    st.subheader('1. Annual Energy Costs')
 
-st.write('The costs of energy are changing rapidly at the moment in the UK, so the cost of energy may be significantly'
-+ ' different by the time you have a heat pump installed.  To give the simplest, like-for-like comparison, '
-+ 'we use a constant price of energy for the whole year based on the October 2022 domestic energy price cap (even though this is set to change for many in April 2023).'
-+ '  These costs should only be used comparatively between the two cases and may be quite different from your energy bill in previous years.  '
-+ '  You can edit the price of energy used in the *Advanced Settings* tab at the top of the page.')
+    st.write('The costs of energy are changing rapidly at the moment in the UK, so the cost of energy may be significantly'
+    + ' different by the time you have a heat pump installed.  To give the simplest, like-for-like comparison, '
+    + 'we use a constant price of energy for the whole year based on the October 2022 domestic energy price cap (even though this is set to change for many in April 2023).'
+    + '  These costs should only be used comparatively between the two cases and may be quite different from your energy bill in previous years.  '
+    + '  You can edit the price of energy used in the *Advanced Settings* tab at the top of the page.')
 
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.metric('Current', f"£{costs_total:.0f}")
-with c2:
-    dcost = -100*(costs_total - costs_total_typ)/costs_total
-    st.metric('Typical HP Install', f"£{costs_total_typ:.0f}", 
-    delta=f"{change_str2(dcost)}£{abs(costs_total - costs_total_typ):.0f} ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
-with c3:
-    dcost = -100*(costs_total - costs_total_hi)/costs_total
-    st.metric('Hi-performance HP Install', f"£{costs_total_hi:.0f}", 
-    delta=f"{change_str2(dcost)} £{abs(costs_total - costs_total_hi):.0f} ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.metric('Current', f"£{costs_total:,.0f}")
+    with c2:
+        dcost = -100*(costs_total - costs_total_typ)/costs_total
+        st.metric('Typical HP Install', f"£{costs_total_typ:,.0f}", 
+        delta=f"{change_str2(dcost)}£{abs(costs_total - costs_total_typ):,.0f} ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
+    with c3:
+        dcost = -100*(costs_total - costs_total_hi)/costs_total
+        st.metric('Hi-performance HP Install', f"£{costs_total_hi:,.0f}", 
+        delta=f"{change_str2(dcost)} £{abs(costs_total - costs_total_hi):,.0f} ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
 
-bars = make_stacked_bar_horiz(df_costs, 'Costs (£)', 1)
-st.altair_chart(bars, use_container_width=True)
+    bars = make_stacked_bar_horiz(df_costs, 'Costs (£)', 1)
+    st.altair_chart(bars, use_container_width=True)
 
-st.subheader('2. Annual Emissions')
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.metric('Current', f"{emissions_total:.0f} kg of CO2")
-with c2:
-    dcost = 100*(emissions_total_typ - emissions_total)/emissions_total
-    st.metric('Typical HP Install', f"{emissions_total_typ:.0f} kg of CO2", 
-    delta=f"{change_str2(dcost)} {abs(emissions_total_typ - emissions_total):.0f} kg of CO2 ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
-with c3:
-    dcost = 100*(emissions_total_hi - emissions_total)/emissions_total
-    st.metric('Hi-performance HP Install', f"{emissions_total_hi:.0f} kg of CO2", 
-    delta=f"{change_str2(dcost)} {abs(emissions_total_hi - emissions_total):.0f} kg of CO2 ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
+    st.subheader('2. Annual Emissions')
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.metric('Current', f"{emissions_total:,.0f} kg CO2")
+    with c2:
+        dcost = 100*(emissions_total_typ - emissions_total)/emissions_total
+        st.metric('Typical HP Install', f"{emissions_total_typ:,.0f} kg CO2", 
+        delta=f"{change_str2(dcost)} {abs(emissions_total_typ - emissions_total):,.0f} kg CO2 ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
+    with c3:
+        dcost = 100*(emissions_total_hi - emissions_total)/emissions_total
+        st.metric('Hi-performance HP Install', f"{emissions_total_hi:,.0f} kg CO2", 
+        delta=f"{change_str2(dcost)} {abs(emissions_total_hi - emissions_total):,.0f} kg CO2 ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
 
-bars = make_stacked_bar_horiz(df_energy, 'Emissions (kg of CO2)')
-st.altair_chart(bars, use_container_width=True)
+    bars = make_stacked_bar_horiz(df_energy, 'Emissions (kg of CO2)')
+    st.altair_chart(bars, use_container_width=True)
 
-st.subheader('3. Annual Energy Usage')
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.metric('Current', f"{energy_total:.0f} kWh")
-with c2:
-    dcost = 100*(energy_total_typ - energy_total)/energy_total
-    st.metric('Typical HP Install', f"{energy_total_typ:.0f} kWh", 
-    delta=f"{change_str2(dcost)} {abs(energy_total_typ - energy_total):.0f} kWh ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
-with c3:
-    dcost = 100*(energy_total_hi - energy_total)/energy_total
-    st.metric('Hi-performance HP Install', f"{energy_total_hi:.0f} kWh", 
-    delta=f"{change_str2(dcost)} {abs(energy_total_hi - energy_total):.0f} kWh ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
+    st.subheader('3. Annual Energy Usage')
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.metric('Current', f"{energy_total:,.0f} kWh")
+    with c2:
+        dcost = 100*(energy_total_typ - energy_total)/energy_total
+        st.metric('Typical HP Install', f"{energy_total_typ:,.0f} kWh", 
+        delta=f"{change_str2(dcost)} {abs(energy_total_typ - energy_total):,.0f} kWh ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
+    with c3:
+        dcost = 100*(energy_total_hi - energy_total)/energy_total
+        st.metric('Hi-performance HP Install', f"{energy_total_hi:,.0f} kWh", 
+        delta=f"{change_str2(dcost)} {abs(energy_total_hi - energy_total):,.0f} kWh ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
 
-bars = make_stacked_bar_horiz(df_energy, 'Energy (kWh)')
-st.altair_chart(bars, use_container_width=True)
+    bars = make_stacked_bar_horiz(df_energy, 'Energy (kWh)')
+    st.altair_chart(bars, use_container_width=True)
 
-
-
-st.write('If you found this tool helpful - please share!')
-st.markdown("<a href='#linkto_top'>^ Back to top ^</a>", unsafe_allow_html=True)
+    st.write('If you found this tool helpful - please share!')

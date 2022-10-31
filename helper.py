@@ -1,3 +1,24 @@
+# HEAT PUMP RUNNING COSTS AND EMISSIONS ESTIMATOR
+# A calculator for estimating the impact of upgrading from a gas boiler 
+# to a heat pump on running costs, CO2 emissions and energy used.
+#
+# Copyright (C) 2022  Chris Warwick, Green Heat Coop Ltd.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, version 3 of the License.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# For enquiries about using this source code, please contact:
+# hello@greenheatcoop.co.uk
+
 import pandas as pd
 import numpy as np
 import altair as alt
