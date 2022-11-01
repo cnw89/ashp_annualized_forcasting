@@ -169,7 +169,12 @@ with tab1:
 
     # some complex set-ups don't need extra inputs, just explain how to use the existing ones.
     with st.expander('I generate some of my own electricity'):
-        st.write('When entering the annual electricity consumption above, only input the annual *imported* electricity. The results below will then only relate to the imported energy and emissions.')
+        st.write('When entering the annual electricity consumption above, only input the annual *imported* electricity. ' +
+        'The results below will then only relate to the imported energy and emissions.' +
+        ' Heating your home with a heat pump may not use much of your solar-generated electricity due to the energy demand ' +
+        'being primarily in the winter when your existing electricity consumption may already use all your generation capacity. '
+        'However, your surplus generation capacity in the summer months can be used to heat your hot water with the heat pump.')
+        is_free_summer_hw = st.checkbox('Set 4 months of summer hot water use to be provided at no cost in the heat pump scenarios', value=False)
 
     with st.expander('I use solar thermal panels to heat my hot water'):
         st.write('Typically solar thermal energy does not provide all of your hot water heating needs.  In this case you should reduce the '
@@ -446,13 +451,17 @@ def do_heat_pump_case(install_type, gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, ele
     else:
         gas_stand_total = gas_stand*3.65
 
+    if is_free_summer_hw: #those with solar panels can get free hot water for 4 months
+        elec_unit_total = (elec_total_kWh - elec_hw_kWh/3)*elec_unit/100
+    else:
+        elec_unit_total = elec_total_kWh*elec_unit/100
+
     costs_by_type = [[case_name, 'Gas standing', gas_stand_total],
                     [case_name, 'Gas unit',  gas_total_kWh*gas_unit/100],
                     [case_name, 'Elec.  standing', elec_stand*3.65],
-                    [case_name, 'Elec.  unit', elec_total_kWh*elec_unit/100]] 
-
-
-    costs_total = sum([gas_stand_total, gas_total_kWh*gas_unit/100, elec_stand*3.65, elec_total_kWh*elec_unit/100])
+                    [case_name, 'Elec.  unit', elec_unit_total]] 
+    
+    costs_total = sum([gas_stand_total, gas_total_kWh*gas_unit/100, elec_stand*3.65, elec_unit_total])
 
     return energy_usage, costs_by_type, energy_total, emissions_total, costs_total
 
