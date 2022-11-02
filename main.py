@@ -187,7 +187,7 @@ with tab1:
     
     efficiency_boost = 0
     with st.expander('Energy efficiency measures'):         
-        st.write('Select the energy efficiency measures to be imlpemented.' +
+        st.write('Select the energy efficiency measures to be implemented.' +
         ' Approximate heating demand reduction for each measure is shown in brackets. These are conservative estimates based on average *measured*' +
          ' reductions in heat demand rather than quoted reductions, which includes for example the effect of households choosing more comfortable heating settings' +
          ' once their energy bill reduces. Alternatively you can enter a custom heating demand reduction by selecting the last checkbox.')
@@ -228,7 +228,17 @@ with tab2:
         with c2:    
             elec_stand = st.number_input('Electricity standing charge (p/day):', min_value=0.0, max_value=100.0, value=elec_stand, step=0.01)        
             elec_unit = st.number_input('Electricity unit cost (p/kWh):', min_value=0.0, max_value=100.0, value=elec_unit, step=0.01)  
-    
+
+        is_two_tier_tariff = st.checkbox('Add off-peak electricity tariff (e.g. like Economy7)')
+
+        if is_two_tier_tariff:
+            st.write('In the heat pump scenarios we assume that the average energy consumed per off-peak tariff hour by heating is two-thirds that used in the' +
+            ' average peak-tariff hour. We also assume all of the hot water heating is performed in off-peak hours (unless using solar power) and none of the cooking.')
+
+            elec_unit2 = st.number_input('Off-peak electricity unit cost (p/kWh):', min_value=0.0, max_value=100.0, value=18.0, step=0.01)  
+            second_tariff_hours = st.slider('Number of hours of off-peak tariff per day:', 0, 10, 7, 1)
+            pc_elec_second_tariff = st.slider('Percentage of electricity consumption (excluding heat pump) in off-peak hours:', 0, 100, 40, 1)
+            pc_elec_second_tariff /= 100
         
     st.subheader('2.  Device performance')
     st.write('Results are calculated for both a typical and a high-performance heat pump installation.  '
@@ -290,7 +300,7 @@ st.write('')
 st.write('')
 st.write('')
 st.write('')
-st.markdown("This tool is a project of <a href='https://www.greenheatcoop.co.uk'>Green Heat Coop</a>.", unsafe_allow_html=True)
+st.markdown("This tool is a project of <a href='https://www.greenheatcoop.co.uk'>Green Heat Coop Ltd</a>.", unsafe_allow_html=True)
 img = Image.open('web_banner.png')
 st.image(img)
 
@@ -309,12 +319,17 @@ GAS_HW_kWhperL = 4200 * hw_temp_raise/(3600 * 1000 * boiler_hw_eff)
 IMMERSION_HW_kWhperL = 4200 * hw_temp_raise/(3600 * 1000 * immersion_hw_eff)
 
 #_____________first do the current case____________________
+if is_two_tier_tariff:
+    elec_unit_eff = (pc_elec_second_tariff*elec_unit2) + (1 - pc_elec_second_tariff)*elec_unit
+else:
+    elec_unit_eff = elec_unit
+
 costs_by_type = [['Current', 'Gas standing', gas_stand*3.65],
                 ['Current', 'Gas unit',  gas_total_kWh * gas_unit/100],
                 ['Current', 'Elec.  standing', elec_stand*3.65],
-                ['Current', 'Elec.  unit', elec_total_kWh * elec_unit/100]] 
+                ['Current', 'Elec.  unit', elec_total_kWh * elec_unit_eff/100]] 
             
-costs_total = (gas_stand + elec_stand)*3.65 + gas_total_kWh * gas_unit/100 + elec_total_kWh * elec_unit/100
+costs_total = (gas_stand + elec_stand)*3.65 + gas_total_kWh * gas_unit/100 + elec_total_kWh * elec_unit_eff/100
 
 # hot water energy demand
 if is_hw_gas:
@@ -418,30 +433,33 @@ def do_heat_pump_case(install_type, gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, ele
     else:
         elec_hw_kWh = elec_hw_kWh * immersion_hw_eff/hp_hw_cop
 
-    #totals - excluding gas cooking if present
-    elec_total_kWh = elec_other_kWh + elec_heat_kWh + elec_hw_kWh
-    gas_total_kWh = gas_heat_kWh
-
-    #add gas cooking energy on
+    #gas cooking energy
     if is_cook_gas:
         if is_disconnect_gas:
             emissions_cook = gas_cook_kWh * elec_kgCO2perkWh
-            elec_total_kWh += gas_cook_kWh        
+            elec_cook_kWh = gas_cook_kWh
+            gas_cook_kWh = 0   
         else:
             emissions_cook = gas_cook_kWh * GAS_kgCO2perkWh
-            gas_total_kWh += gas_cook_kWh
+            elec_cook_kWh = 0
     else:
-        emissions_cook = 0    
+        emissions_cook = 0   
+        gas_cook_kWh = 0 #redundant, for clarity
+        elec_cook_kWh = 0 
+
+    #totals
+    elec_total_kWh = elec_other_kWh + elec_heat_kWh + elec_hw_kWh + elec_cook_kWh
+    gas_total_kWh = gas_heat_kWh + gas_cook_kWh
 
     #new energy consumption and emissions table
     case_name = install_type + ' HP Install'
     energy_usage = [[case_name, 'Heating', gas_heat_kWh+elec_heat_kWh, gas_heat_kWh*GAS_kgCO2perkWh+elec_heat_kWh*elec_kgCO2perkWh],
                 [case_name, 'Hot water', elec_hw_kWh, elec_hw_kWh*elec_kgCO2perkWh],
-                [case_name, 'Cooking', gas_cook_kWh, emissions_cook],
+                [case_name, 'Cooking', gas_cook_kWh+elec_cook_kWh, emissions_cook],
                 [case_name, 'Other Elec.', elec_other_kWh, elec_other_kWh*elec_kgCO2perkWh]]   
 
-    energy_total = elec_heat_kWh + elec_hw_kWh + gas_cook_kWh + elec_other_kWh
-    emissions_total = sum([elec_heat_kWh*elec_kgCO2perkWh, elec_hw_kWh*elec_kgCO2perkWh, emissions_cook, elec_other_kWh*elec_kgCO2perkWh])
+    energy_total = elec_heat_kWh + elec_hw_kWh + elec_cook_kWh  + elec_other_kWh + gas_heat_kWh + gas_cook_kWh
+    emissions_total = sum([elec_heat_kWh*elec_kgCO2perkWh, gas_heat_kWh*GAS_kgCO2perkWh, elec_hw_kWh*elec_kgCO2perkWh, emissions_cook, elec_other_kWh*elec_kgCO2perkWh])
 
     #update costs
 
@@ -451,17 +469,33 @@ def do_heat_pump_case(install_type, gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, ele
     else:
         gas_stand_total = gas_stand*3.65
 
-    if is_free_summer_hw: #those with solar panels can get free hot water for 4 months
-        elec_unit_total = (elec_total_kWh - elec_hw_kWh/3)*elec_unit/100
+    if is_two_tier_tariff:
+        #TODO: correct this!!!!
+        #this pc of heating in second tariff (second_tariff_hours limited to 10)
+        pc_heat_second_tariff = (2/3)*second_tariff_hours/((2/3)*10 + 14)
+        #all of hot water in second tariff (or free in summer solar)
+        #none of cooking in second tariff
+        #same pc of other elec in second tariff as original scenario
+
+        if is_free_summer_hw: #those with solar panels can get free hot water for 4 months
+            elec_unit_total_cost = elec_heat_kWh * (pc_heat_second_tariff*elec_unit2 + (1-pc_heat_second_tariff)*elec_unit) + \
+                elec_hw_kWh*(2/3)*elec_unit2 + elec_cook_kWh*elec_unit + elec_other_kWh*elec_unit_eff
+        else:
+            elec_unit_total_cost = elec_heat_kWh * (pc_heat_second_tariff*elec_unit2 + (1-pc_heat_second_tariff)*elec_unit) + \
+                elec_hw_kWh*elec_unit2 + elec_cook_kWh*elec_unit + elec_other_kWh*elec_unit_eff
+        elec_unit_total_cost /= 100
     else:
-        elec_unit_total = elec_total_kWh*elec_unit/100
+        if is_free_summer_hw: #those with solar panels can get free hot water for 4 months
+            elec_unit_total_cost = (elec_total_kWh - elec_hw_kWh/3)*elec_unit/100
+        else:
+            elec_unit_total_cost = elec_total_kWh*elec_unit/100
 
     costs_by_type = [[case_name, 'Gas standing', gas_stand_total],
                     [case_name, 'Gas unit',  gas_total_kWh*gas_unit/100],
                     [case_name, 'Elec.  standing', elec_stand*3.65],
-                    [case_name, 'Elec.  unit', elec_unit_total]] 
+                    [case_name, 'Elec.  unit', elec_unit_total_cost]] 
     
-    costs_total = sum([gas_stand_total, gas_total_kWh*gas_unit/100, elec_stand*3.65, elec_unit_total])
+    costs_total = sum([gas_stand_total, gas_total_kWh*gas_unit/100, elec_stand*3.65, elec_unit_total_cost])
 
     return energy_usage, costs_by_type, energy_total, emissions_total, costs_total
 
