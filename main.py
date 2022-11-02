@@ -216,7 +216,8 @@ with tab2:
     op2 = 'Use custom unit and standing charges'
 
     charge_option = st.radio('Prices to use:',[op1, op2])
-
+    
+    is_two_tier_tariff = False
     #if user selects to input their own energy tariff
     if charge_option == op2:
         c1, c2 = st.columns(2)
