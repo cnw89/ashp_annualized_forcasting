@@ -216,7 +216,7 @@ with tab2:
     op2 = 'Use custom unit and standing charges'
 
     charge_option = st.radio('Prices to use:',[op1, op2])
-    
+
     is_two_tier_tariff = False
     #if user selects to input their own energy tariff
     if charge_option == op2:
@@ -392,7 +392,7 @@ emissions_total = sum([gas_heat_kWh*GAS_kgCO2perkWh, gas_hw_kWh*GAS_kgCO2perkWh,
 #___________now do the future/heat pump case_____________
 
 
-def do_heat_pump_case(install_type, gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, elec_hw_kWh):
+def do_heat_pump_case(install_type, gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, elec_hw_kWh, gas_cook_kWh):
     """
     install type either 'Typical' or 'Hi-performance'
     """
@@ -501,10 +501,10 @@ def do_heat_pump_case(install_type, gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, ele
     return energy_usage, costs_by_type, energy_total, emissions_total, costs_total
 
 energy_usage_typ, costs_by_type_typ, energy_total_typ, emissions_total_typ, costs_total_typ = \
-do_heat_pump_case('Typical', gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, elec_hw_kWh)
+do_heat_pump_case('Typical', gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, elec_hw_kWh, gas_cook_kWh)
 
 energy_usage_hi, costs_by_type_hi, energy_total_hi, emissions_total_hi, costs_total_hi = \
-do_heat_pump_case('Hi-performance', gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, elec_hw_kWh)
+do_heat_pump_case('Hi-performance', gas_heat_kWh, elec_heat_kWh, gas_hw_kWh, elec_hw_kWh, gas_cook_kWh)
 
 #if no gas heating, just delete cooking data entries (index 2):
 if not is_cook_gas:
