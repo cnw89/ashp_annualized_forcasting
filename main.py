@@ -45,11 +45,11 @@ GAS_kgCO2perkWh = 0.21
 ELEC_RENEW_kgCO2perkWh = 0
 ELEC_AVE_kgCO2perkWh = 0.136
 
-# price cap October 2022 gas and electricity domestic standing and unit charges
-gas_stand = 28.0
-gas_unit = 10.3
-elec_stand = 46.0
-elec_unit = 34.0
+# price cap January 2024 gas and electricity domestic standing and unit charges
+gas_stand = 30.0
+gas_unit = 7.0
+elec_stand = 53.0
+elec_unit = 29.0
 
 # efficincy measures to choose from
 efficiency_opts = [('Draft proofing and/or door insulation (3%)', 0.03),
@@ -212,7 +212,7 @@ with tab2:
 
     st.subheader('1.  Energy prices')
 
-    op1 = 'Use the UK-average domestic energy price cap for direct debit paying customers for the period beginning October 2022'
+    op1 = 'Use the UK-average domestic energy price cap for direct debit paying customers for the period beginning January 2024'
     op2 = 'Use custom unit and standing charges'
 
     charge_option = st.radio('Prices to use:',[op1, op2])
