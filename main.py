@@ -31,10 +31,10 @@ boiler_heat_eff = 0.88
 boiler_hw_eff = 0.88
 immersion_hw_eff = 1
 #typical heat pump performance:
-hp_heat_scop_typ = 3.2
-hp_hw_cop_typ = 2.7
+hp_heat_scop_typ = 3.4
+hp_hw_cop_typ = 2.8
 #hi heat pump performance
-hp_heat_scop_hi = 3.8
+hp_heat_scop_hi = 4.0
 hp_hw_cop_hi = 2.8
 
 #Raise in temp (degC) from mains water to hot water AS USED
@@ -552,11 +552,11 @@ with result_container:
     with c1:
         st.metric('Current', f"£{costs_total:,.0f}")
     with c2:
-        dcost = -100*(costs_total - costs_total_typ)/costs_total
+        dcost = -100*(costs_total - costs_total_typ)/max(costs_total,1)
         st.metric('Typical HP Install', f"£{costs_total_typ:,.0f}", 
         delta=f"{change_str2(dcost)}£{abs(costs_total - costs_total_typ):,.0f} ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
     with c3:
-        dcost = -100*(costs_total - costs_total_hi)/costs_total
+        dcost = -100*(costs_total - costs_total_hi)/max(costs_total,1)
         st.metric('Hi-performance HP Install', f"£{costs_total_hi:,.0f}", 
         delta=f"{change_str2(dcost)} £{abs(costs_total - costs_total_hi):,.0f} ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
 
@@ -568,11 +568,11 @@ with result_container:
     with c1:
         st.metric('Current', f"{emissions_total:,.0f} kg CO2")
     with c2:
-        dcost = 100*(emissions_total_typ - emissions_total)/emissions_total
+        dcost = 100*(emissions_total_typ - emissions_total)/max(emissions_total, 0.0001)
         st.metric('Typical HP Install', f"{emissions_total_typ:,.0f} kg CO2", 
         delta=f"{change_str2(dcost)} {abs(emissions_total_typ - emissions_total):,.0f} kg CO2 ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
     with c3:
-        dcost = 100*(emissions_total_hi - emissions_total)/emissions_total
+        dcost = 100*(emissions_total_hi - emissions_total)/max(emissions_total, 0.0001)
         st.metric('Hi-performance HP Install', f"{emissions_total_hi:,.0f} kg CO2", 
         delta=f"{change_str2(dcost)} {abs(emissions_total_hi - emissions_total):,.0f} kg CO2 ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
 
@@ -584,11 +584,11 @@ with result_container:
     with c1:
         st.metric('Current', f"{energy_total:,.0f} kWh")
     with c2:
-        dcost = 100*(energy_total_typ - energy_total)/energy_total
+        dcost = 100*(energy_total_typ - energy_total)/max(energy_total,1)
         st.metric('Typical HP Install', f"{energy_total_typ:,.0f} kWh", 
         delta=f"{change_str2(dcost)} {abs(energy_total_typ - energy_total):,.0f} kWh ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
     with c3:
-        dcost = 100*(energy_total_hi - energy_total)/energy_total
+        dcost = 100*(energy_total_hi - energy_total)/max(energy_total,1)
         st.metric('Hi-performance HP Install', f"{energy_total_hi:,.0f} kWh", 
         delta=f"{change_str2(dcost)} {abs(energy_total_hi - energy_total):,.0f} kWh ({change_str2(dcost)} {abs(dcost):.0f}%)", delta_color='inverse')
 
