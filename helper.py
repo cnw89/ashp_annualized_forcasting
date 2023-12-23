@@ -106,7 +106,7 @@ def make_stacked_bar_horiz(source, value_name, col_scheme=2):
         orient='top', #legendX=0, legendY=400,        
         direction='horizontal'),    
         scale=alt.Scale(scheme=col_scheme))
-    ).properties(width='container', height=200 #title=titleStr,
+    ).properties(width='container', height=300 #title=titleStr,
     ).configure_axis(titleFontSize=16, labelFontSize=14
     ).configure_legend(titleFontSize=16, labelFontSize=14)#.configure_title(fontSize=18
     #)
