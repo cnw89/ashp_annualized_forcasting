@@ -698,7 +698,7 @@ with result_container:
 
     st.write('The costs of energy are changing rapidly at the moment in the UK, so the cost of energy may be significantly'
     + ' different by the time you have a heat pump installed.  To give the simplest, like-for-like comparison, '
-    + 'we use a constant price of energy for the whole year based on the October 2022 domestic energy price cap (even though this is set to change for many in April 2023).'
+    + 'we use a constant price of energy for the whole year based on the October 2025 domestic energy price cap (this is set to change in January 2026).'
     + '  These costs should only be used comparatively between the two cases and may be quite different from your energy bill in previous years.  '
     + '  You can edit the price of energy used in the *Advanced Settings* tab at the top of the page.')
 
