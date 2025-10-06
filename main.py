@@ -45,11 +45,11 @@ GAS_kgCO2perkWh = 0.21
 ELEC_RENEW_kgCO2perkWh = 0
 ELEC_AVE_kgCO2perkWh = 0.136
 
-# price cap January 2024 gas and electricity domestic standing and unit charges
-gas_stand = 30.0
-gas_unit = 7.0
-elec_stand = 53.0
-elec_unit = 29.0
+# price cap October 2025 gas and electricity domestic standing and unit charges
+gas_stand = 34.03
+gas_unit = 6.29
+elec_stand = 53.68
+elec_unit = 26.35
 #cosy octopus details
 elec_unit_cosy_standard=elec_unit
 elec_unit_cosy_offpeak = 0.6*elec_unit
@@ -258,7 +258,7 @@ with tab2:
 
     st.subheader('1.  Energy prices')
 
-    op1 = 'Use the UK-average domestic energy price cap for direct debit paying customers for the period beginning January 2024'
+    op1 = 'Use the UK-average domestic energy price cap for direct debit paying customers for the period beginning October 2025'
     op2 = 'Use custom unit and standing charges'
 
     charge_option = st.radio('Prices to use:',[op1, op2])
