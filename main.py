@@ -24,7 +24,7 @@ import pandas as pd
 from helper import generate_df, make_stacked_bar_horiz
 from PIL import Image
 
-
+#new comment
 #__________ set default values______________
 #efficiencies and performance coefficients - default values
 boiler_heat_eff = 0.88
